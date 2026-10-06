@@ -10,7 +10,7 @@
     "mood_sound": {
       "sound": "minecraft:ambient.cave",
       "tick_delay": 6000,
-      "search_distance": 16,
+      "block_search_extent": 8,
       "offset": 2.0
     }
   },
