@@ -49,23 +49,48 @@ public class ElevatorStationBlock extends Block implements PolymerBlock {
         ServerWorld currentWorld = (ServerWorld) world;
         boolean isGigakhrushch = currentWorld.getRegistryKey().getValue().equals(ModDimensions.GIGAKHRUSHCHYOVKA_KEY.getValue());
 
-        serverPlayer.sendMessage(Text.translatable("samosbor.elevator.teleporting"), true);
-        currentWorld.playSound(null, pos, SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.BLOCKS, 1.0f, 0.5f);
-        currentWorld.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.6f);
+        currentWorld.playSound(null, pos, SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.BLOCKS, 1.2f, 0.6f);
+        currentWorld.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.7f);
+        currentWorld.playSound(null, pos, SoundEvents.ENTITY_MINECART_RIDING, SoundCategory.BLOCKS, 0.9f, 0.5f);
 
-        serverPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 80, 1, false, false, false));
+        serverPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 60, 0, false, false, false));
+        serverPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 40, 1, false, false, false));
 
         if (isGigakhrushch) {
+            // Returning to Overworld
             ServerWorld targetWorld = currentWorld.getServer().getWorld(World.OVERWORLD);
             if (targetWorld != null) {
                 BlockPos targetPos = targetWorld.getTopPosition(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, pos);
                 serverPlayer.teleport(targetWorld, targetPos.getX() + 0.5, targetPos.getY() + 1.0, targetPos.getZ() + 0.5, serverPlayer.getYaw(), serverPlayer.getPitch());
+                serverPlayer.sendMessage(Text.literal("§a[ЛИФТ]: Выход на поверхность. Наземный сектор."), true);
             }
         } else {
+            // Entering Gigakhrushchyovka
             ServerWorld targetWorld = currentWorld.getServer().getWorld(ModDimensions.GIGAKHRUSHCHYOVKA_KEY);
             if (targetWorld != null) {
-                int targetY = 66;
-                serverPlayer.teleport(targetWorld, pos.getX() + 0.5, targetY + 1.0, pos.getZ() + 0.5, serverPlayer.getYaw(), serverPlayer.getPitch());
+                // Snap safely to open central corridor (lx=7, lz=7)
+                int chunkOriginX = Math.floorDiv(pos.getX(), 16) * 16;
+                int chunkOriginZ = Math.floorDiv(pos.getZ(), 16) * 16;
+                int targetX = chunkOriginX + 7;
+                int targetZ = chunkOriginZ + 7;
+                int targetY = 66; // Floor 11 corridor floor
+
+                BlockPos landingPos = new BlockPos(targetX, targetY, targetZ);
+                BlockPos returnStationPos = landingPos.south(); // targetZ + 1
+
+                // Ensure safe landing pad and return station
+                targetWorld.setBlockState(landingPos, ModBlocks.P46_PANEL.getDefaultState(), Block.NOTIFY_LISTENERS);
+                targetWorld.setBlockState(landingPos.up(1), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                targetWorld.setBlockState(landingPos.up(2), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+
+                // Place return elevator station so player can always go back!
+                targetWorld.setBlockState(returnStationPos, ModBlocks.ELEVATOR_STATION.getDefaultState(), Block.NOTIFY_LISTENERS);
+                targetWorld.setBlockState(returnStationPos.up(1), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                targetWorld.setBlockState(returnStationPos.up(2), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                targetWorld.setBlockState(returnStationPos.up(3), ModBlocks.FLUORESCENT_LAMP.getDefaultState(), Block.NOTIFY_LISTENERS);
+
+                serverPlayer.teleport(targetWorld, targetX + 0.5, targetY + 1.0, targetZ + 0.5, serverPlayer.getYaw(), serverPlayer.getPitch());
+                serverPlayer.sendMessage(Text.literal("§e[ЛИФТ]: Добро пожаловать в Гигахрущёвку. Этаж 11 (Коридор Сектора)."), true);
             }
         }
     }

@@ -9,8 +9,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.gen.feature.TreeConfiguredFeatures;
 
@@ -26,6 +24,18 @@ public class ModBlocks {
     public static final Block FOOD_DISPENSER = register("food_dispenser", new FoodDispenserBlock(), Items.DISPENSER);
     public static final Block BIOMASS = register("biomass", new BiomassBlock(), Items.NETHER_WART_BLOCK);
     public static final Block TOXIC_MUSHROOM = register("toxic_mushroom", new ToxicMushroomBlock(TreeConfiguredFeatures.HUGE_RED_MUSHROOM), Items.RED_MUSHROOM);
+
+    // Domestic & Soviet furniture blocks
+    public static final Block WALL_CARPET = register("wall_carpet", new WallCarpetBlock(), Items.RED_GLAZED_TERRACOTTA);
+    public static final Block OLD_TV = register("old_tv", new OldTvBlock(), Items.NOTE_BLOCK);
+    public static final Block RADIO_RECEIVER = register("radio_receiver", new RadioReceiverBlock(), Items.JUKEBOX);
+    public static final Block CAST_IRON_RADIATOR = register("cast_iron_radiator", new CastIronRadiatorBlock(), Items.ANVIL);
+    public static final Block GAS_STOVE = register("gas_stove", new GasStoveBlock(), Items.SMOKER);
+    public static final Block RUSTY_SINK = register("rusty_sink", new RustySinkBlock(), Items.CAULDRON);
+
+    // Elevator system blocks
+    public static final Block ELEVATOR_DOOR = register("elevator_door", new ElevatorDoorBlock(), Items.COPPER_DOOR);
+    public static final Block ELEVATOR_PANEL = register("elevator_panel", new ElevatorPanelBlock(), Items.OBSERVER);
 
     private static Block register(String name, Block block, Item vanillaItem) {
         Identifier id = Identifier.of(MOD_ID, name);

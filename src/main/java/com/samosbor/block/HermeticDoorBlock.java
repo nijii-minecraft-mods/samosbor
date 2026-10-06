@@ -44,34 +44,63 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
         if (!world.isClient) {
             boolean isOpen = state.get(OPEN);
             boolean isSealed = state.get(SEALED);
+            BlockPos otherHalfPos = state.get(HALF) == DoubleBlockHalf.LOWER ? pos.up() : pos.down();
+            BlockState otherState = world.getBlockState(otherHalfPos);
 
-            if (isOpen) {
-                // If open, close it first
-                BlockState newState = state.with(OPEN, false).with(SEALED, false);
+            // Shift+Right Click: Toggle sealing valve (Вентиль герметизации)
+            if (player.isSneaking()) {
+                if (isOpen) {
+                    // Close and seal simultaneously
+                    BlockState newState = state.with(OPEN, false).with(SEALED, true);
+                    world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
+                    if (otherState.isOf(this)) {
+                        world.setBlockState(otherHalfPos, otherState.with(OPEN, false).with(SEALED, true), Block.NOTIFY_LISTENERS);
+                    }
+                    world.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.7f);
+                    world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 0.6f);
+                    player.sendMessage(Text.literal("§eГермозатвор плотно задраен вентилем."), true);
+                    return ActionResult.SUCCESS;
+                }
+
+                boolean newSealed = !isSealed;
+                BlockState newState = state.with(SEALED, newSealed);
                 world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
-                world.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.7f);
+                if (otherState.isOf(this)) {
+                    world.setBlockState(otherHalfPos, otherState.with(SEALED, newSealed), Block.NOTIFY_LISTENERS);
+                }
+
+                if (newSealed) {
+                    world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 0.6f);
+                    world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.5f);
+                    player.sendMessage(Text.literal("§eГермозатвор заблокирован вентилем (герметично)."), true);
+                } else {
+                    world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_OPEN, SoundCategory.BLOCKS, 1.0f, 0.8f);
+                    player.sendMessage(Text.literal("§7Вентиль разблокирован."), true);
+                }
                 return ActionResult.SUCCESS;
             }
 
-            // Door is closed: toggle sealed state
-            boolean newSealed = !isSealed;
-            BlockState newState = state.with(SEALED, newSealed);
-            world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
-
-            // Also update other half of double block
-            BlockPos otherHalfPos = state.get(HALF) == DoubleBlockHalf.LOWER ? pos.up() : pos.down();
-            BlockState otherState = world.getBlockState(otherHalfPos);
-            if (otherState.isOf(this)) {
-                world.setBlockState(otherHalfPos, otherState.with(SEALED, newSealed), Block.NOTIFY_LISTENERS);
+            // Normal Right Click: Open or Close door
+            if (isSealed) {
+                // Cannot open when sealed with valve
+                world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_CLOSE, SoundCategory.BLOCKS, 0.7f, 1.6f);
+                world.playSound(null, pos, SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.BLOCKS, 0.5f, 1.8f);
+                player.sendMessage(Text.literal("§cГермозатвор задраен вентилем! (Shift+ПКМ чтобы отпереть вентиль)"), true);
+                return ActionResult.SUCCESS;
             }
 
-            if (newSealed) {
-                world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 0.6f);
-                world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.5f);
-                player.sendMessage(Text.translatable("samosbor.door.sealed"), true);
+            // Toggle Open/Closed
+            boolean newOpen = !isOpen;
+            BlockState newState = state.with(OPEN, newOpen);
+            world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
+            if (otherState.isOf(this)) {
+                world.setBlockState(otherHalfPos, otherState.with(OPEN, newOpen), Block.NOTIFY_LISTENERS);
+            }
+
+            if (newOpen) {
+                world.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_OPEN, SoundCategory.BLOCKS, 1.0f, 0.8f);
             } else {
-                world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_OPEN, SoundCategory.BLOCKS, 1.0f, 0.8f);
-                player.sendMessage(Text.translatable("samosbor.door.unsealed"), true);
+                world.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.7f);
             }
         }
         return ActionResult.SUCCESS;

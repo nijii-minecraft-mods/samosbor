@@ -110,8 +110,29 @@ public class SamosborManager {
             case PEAK -> {
                 currentPhase = SamosborPhase.RECESSION;
                 phaseTimer = DURATION_RECESSION;
-                broadcastTitle(world, Text.literal("§aОТБОЙ ТРЕВОГИ"), Text.literal("§7Самосбор отступил. Ожидайте Ликвидаторов."), 10, 70, 20);
+                broadcastTitle(world, Text.literal("§aОТБОЙ ТРЕВОГИ"), Text.literal("§7Самосбор отступил. Очистное звено ликвидаторов на этаже."), 10, 70, 20);
                 broadcastMessage(world, Text.translatable("samosbor.event.recession"));
+
+                // Spawn Liquidator purge team in the corridors
+                for (ServerPlayerEntity player : world.getPlayers()) {
+                    BlockPos corridorSpawn = player.getBlockPos().add(world.random.nextInt(8) - 4, 0, world.random.nextInt(8) - 4);
+                    if (world.getBlockState(corridorSpawn).isAir()) {
+                        ZombieEntity liquidator = EntityType.ZOMBIE.create(world);
+                        if (liquidator != null) {
+                            liquidator.refreshPositionAndAngles(corridorSpawn.getX() + 0.5, corridorSpawn.getY(), corridorSpawn.getZ() + 0.5, 0, 0);
+                            liquidator.setCustomName(Text.literal("§6Ликвидатор Очистного Звена"));
+                            liquidator.setCustomNameVisible(true);
+                            liquidator.equipStack(EquipmentSlot.HEAD, new ItemStack(ModItems.GAS_MASK));
+                            liquidator.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.IRON_CHESTPLATE));
+                            liquidator.equipStack(EquipmentSlot.LEGS, new ItemStack(net.minecraft.item.Items.IRON_LEGGINGS));
+                            liquidator.equipStack(EquipmentSlot.FEET, new ItemStack(net.minecraft.item.Items.IRON_BOOTS));
+                            liquidator.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.FLAMETHROWER));
+                            liquidator.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.45f);
+                            liquidator.setEquipmentDropChance(EquipmentSlot.HEAD, 0.35f);
+                            world.spawnEntity(liquidator);
+                        }
+                    }
+                }
             }
             case RECESSION -> {
                 currentPhase = SamosborPhase.CALM;
@@ -161,25 +182,27 @@ public class SamosborManager {
             }
         }
 
+        // Throttled safety check: run every 20 ticks (1 sec) for performance
+        boolean checkSafety = (phaseTimer % 20 == 0);
+
         // Dense purple fog everywhere around players
         for (ServerPlayerEntity player : players) {
             double px = player.getX();
             double py = player.getY();
             double pz = player.getZ();
 
-            world.spawnParticles(ParticleTypes.DRAGON_BREATH, px, py + 1, pz, 15, 4.0, 1.5, 4.0, 0.02);
-            world.spawnParticles(ParticleTypes.PORTAL, px, py + 1, pz, 20, 5.0, 2.0, 5.0, 0.1);
+            world.spawnParticles(ParticleTypes.DRAGON_BREATH, px, py + 1, pz, 12, 4.0, 1.5, 4.0, 0.02);
+            world.spawnParticles(ParticleTypes.PORTAL, px, py + 1, pz, 15, 5.0, 2.0, 5.0, 0.1);
 
-            // Safety check: is player protected?
-            boolean safe = isPlayerSafe(world, player);
-
-            if (!safe) {
-                // Samosbor toxic effects!
-                player.addStatusEffect(new StatusEffectInstance(StatusEffects.WITHER, 80, 1, false, true));
-                player.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 100, 0, false, false));
-                player.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 80, 0, false, false));
-                player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 80, 1, false, false));
-                player.damage(world.getDamageSources().magic(), 2.0f);
+            if (checkSafety) {
+                boolean safe = isPlayerSafe(world, player);
+                if (!safe) {
+                    player.addStatusEffect(new StatusEffectInstance(StatusEffects.WITHER, 60, 1, false, true));
+                    player.addStatusEffect(new StatusEffectInstance(StatusEffects.NAUSEA, 100, 0, false, false));
+                    player.addStatusEffect(new StatusEffectInstance(StatusEffects.DARKNESS, 60, 0, false, false));
+                    player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 60, 1, false, false));
+                    player.damage(world.getDamageSources().magic(), 2.0f);
+                }
             }
         }
 
@@ -191,10 +214,12 @@ public class SamosborManager {
                 ZombieEntity mimic = EntityType.ZOMBIE.create(world);
                 if (mimic != null) {
                     mimic.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
-                    mimic.setCustomName(Text.literal("§dПорождение Самосбора"));
+                    mimic.setCustomName(Text.literal("§dМимик (Порождение Самосбора)"));
                     mimic.setCustomNameVisible(true);
-                    mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1000, 1));
-                    mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1000, 1));
+                    mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
+                    mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
+                    mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1200, 1));
+                    mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1200, 1));
                     world.spawnEntity(mimic);
                 }
             }
@@ -215,26 +240,67 @@ public class SamosborManager {
             return true;
         }
 
-        // 2. Sealed room check:
-        BlockPos pos = player.getBlockPos();
-        int lx = Math.floorMod(pos.getX(), 16);
-        int lz = Math.floorMod(pos.getZ(), 16);
+        // 2. Sealed room check via BFS flood-fill
+        BlockPos startPos = player.getBlockPos();
+        int startLx = Math.floorMod(startPos.getX(), 16);
+        int startLz = Math.floorMod(startPos.getZ(), 16);
 
         // Open corridor coordinates: NOT safe
-        if (lx == 7 || lx == 8 || lz == 7 || lz == 8) {
+        if (startLx == 7 || startLx == 8 || startLz == 7 || startLz == 8) {
             return false;
         }
 
-        // Inside a room: check if enclosed by ceiling
-        boolean hasCeiling = false;
-        for (int y = 1; y <= 6; y++) {
-            if (!world.getBlockState(pos.up(y)).isAir()) {
-                hasCeiling = true;
-                break;
+        java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        queue.add(startPos);
+        visited.add(startPos);
+
+        int maxAirBlocks = 120;
+
+        while (!queue.isEmpty()) {
+            BlockPos current = queue.poll();
+
+            int lx = Math.floorMod(current.getX(), 16);
+            int lz = Math.floorMod(current.getZ(), 16);
+            if (lx == 7 || lx == 8 || lz == 7 || lz == 8) {
+                return false; // Air path leads into open corridor
+            }
+
+            if (visited.size() > maxAirBlocks) {
+                return false; // Room is breached or unbounded
+            }
+
+            for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
+                BlockPos neighbor = current.offset(dir);
+                if (visited.contains(neighbor)) {
+                    continue;
+                }
+
+                if (Math.abs(neighbor.getY() - startPos.getY()) > 5) {
+                    return false;
+                }
+
+                net.minecraft.block.BlockState bState = world.getBlockState(neighbor);
+
+                if (bState.getBlock() instanceof HermeticDoorBlock) {
+                    if (HermeticDoorBlock.isSealedAt(world, neighbor)) {
+                        continue; // Sealed door blocks the fog
+                    } else {
+                        return false; // Unsealed door leaks fog
+                    }
+                }
+
+                // If block has solid collision (walls, panes, bars, anvils, cauldrons, sinks, furniture, etc.)
+                if (!bState.isAir() && !bState.isOf(net.minecraft.block.Blocks.FIRE) && bState.getFluidState().isEmpty() && !bState.getCollisionShape(world, neighbor).isEmpty()) {
+                    continue;
+                }
+
+                visited.add(neighbor);
+                queue.add(neighbor);
             }
         }
 
-        return hasCeiling;
+        return true;
     }
 
     private static void broadcastTitle(ServerWorld world, Text title, Text subtitle, int fadeIn, int stay, int fadeOut) {

@@ -5,10 +5,15 @@ import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.BooleanProperty;
 import net.minecraft.state.property.Properties;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -18,8 +23,8 @@ public class EmergencyLampBlock extends Block implements PolymerBlock {
 
     public EmergencyLampBlock() {
         super(AbstractBlock.Settings.copy(Blocks.REDSTONE_LAMP)
-                .luminance(state -> state.get(LIT) ? 15 : 0));
-        this.setDefaultState(this.stateManager.getDefaultState().with(LIT, false));
+                .luminance(state -> state.get(LIT) ? 14 : 0));
+        this.setDefaultState(this.stateManager.getDefaultState().with(LIT, true));
     }
 
     @Override
@@ -30,17 +35,17 @@ public class EmergencyLampBlock extends Block implements PolymerBlock {
     @Nullable
     @Override
     public BlockState getPlacementState(ItemPlacementContext ctx) {
-        return this.getDefaultState().with(LIT, ctx.getWorld().isReceivingRedstonePower(ctx.getBlockPos()));
+        return this.getDefaultState().with(LIT, true);
     }
 
     @Override
-    protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
+    protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (!world.isClient) {
-            boolean powered = world.isReceivingRedstonePower(pos);
-            if (powered != state.get(LIT)) {
-                world.setBlockState(pos, state.with(LIT, powered), Block.NOTIFY_LISTENERS);
-            }
+            boolean newLit = !state.get(LIT);
+            world.setBlockState(pos, state.with(LIT, newLit), Block.NOTIFY_LISTENERS);
+            world.playSound(null, pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 0.6f, newLit ? 0.8f : 0.5f);
         }
+        return ActionResult.SUCCESS;
     }
 
     @Override
