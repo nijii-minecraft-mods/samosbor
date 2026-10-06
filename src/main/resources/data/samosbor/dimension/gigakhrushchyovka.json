@@ -1,0 +1,10 @@
+{
+  "type": "samosbor:gigakhrushchyovka",
+  "generator": {
+    "type": "samosbor:gigakhrushch",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "samosbor:gigakhrushch_corridors"
+    }
+  }
+}

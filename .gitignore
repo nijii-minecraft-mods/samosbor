@@ -1,0 +1,14 @@
+.gradle/
+build/
+bin/
+run/
+out/
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.log
+
+# Keep Gradle wrapper jar
+!gradle/wrapper/gradle-wrapper.jar
