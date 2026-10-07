@@ -10,16 +10,24 @@ import com.samosbor.block.ModBlocks;
 import com.samosbor.block.OldTvBlock;
 import com.samosbor.block.RadioReceiverBlock;
 import com.samosbor.block.WallCarpetBlock;
+import com.samosbor.dimension.GigakhrushchLayout.FloorArchetype;
+import com.samosbor.dimension.GigakhrushchLayout.CourtyardType;
+import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.StairsBlock;
+import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.block.WallSignBlock;
 import net.minecraft.block.entity.BarrelBlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.block.entity.SignText;
+import net.minecraft.block.enums.BedPart;
+import net.minecraft.block.enums.BlockHalf;
 import net.minecraft.block.enums.DoubleBlockHalf;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.loot.LootTable;
 import net.minecraft.loot.LootTables;
 import net.minecraft.registry.Registries;
@@ -56,10 +64,6 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             ).apply(instance, instance.stable(GigakhrushchChunkGenerator::new))
     );
 
-    public static final int FLOOR_HEIGHT = 6;
-    public static final int MAX_HEIGHT = 1024;
-    public static final int TOTAL_FLOORS = MAX_HEIGHT / FLOOR_HEIGHT; // ~170 floors
-
     public GigakhrushchChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
     }
@@ -83,45 +87,53 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         return CompletableFuture.completedFuture(chunk);
     }
 
-    private enum FloorArchetype {
-        RESIDENTIAL,
-        INDUSTRIAL,
-        LABORATORY,
-        ADMINISTRATION,
-        FLOODED_TECHNICAL,
-        PURGED
+    public static final int FLOOR_HEIGHT = GigakhrushchLayout.FLOOR_HEIGHT;
+    public static final int MAX_HEIGHT = GigakhrushchLayout.MAX_HEIGHT;
+    public static final int TOTAL_FLOORS = GigakhrushchLayout.TOTAL_FLOORS;
+    public static final int[] TIER_BOUNDARIES = GigakhrushchLayout.TIER_BOUNDARIES;
+
+    public static int getStairTierForFloor(int floor) {
+        return GigakhrushchLayout.getStairTierForFloor(floor);
+    }
+
+    public static boolean isBoundaryFloor(int floor) {
+        return GigakhrushchLayout.isBoundaryFloor(floor);
     }
 
     public static boolean isCourtyardChunk(int chunkX, int chunkZ) {
-        return Math.floorMod(chunkX * 7 + chunkZ * 11, 14) == 5;
+        return GigakhrushchLayout.isCourtyardChunk(chunkX, chunkZ);
     }
 
-    public static boolean isStairForSegment(int chunkX, int chunkZ, int segment) {
-        if (isCourtyardChunk(chunkX, chunkZ)) return false;
-        long seed = ((long) chunkX * 3129871L) ^ ((long) chunkZ * 6187913L) ^ ((long) segment * 1013904223L);
-        return Math.floorMod(seed, 9) == 0;
+    public static boolean isMetroLineChunk(int chunkZ) {
+        return GigakhrushchLayout.isMetroLineChunk(chunkZ);
+    }
+
+    public static boolean isMetroFloor(int floor) {
+        return GigakhrushchLayout.isMetroFloor(floor);
+    }
+
+    public static boolean isMetroStationChunk(int chunkX, int chunkZ) {
+        return GigakhrushchLayout.isMetroStationChunk(chunkX, chunkZ);
+    }
+
+    public static boolean isStairForTier(int chunkX, int chunkZ, int tier) {
+        return GigakhrushchLayout.isStairForTier(chunkX, chunkZ, tier);
     }
 
     public static boolean isStairChunkForFloor(int chunkX, int chunkZ, int floor) {
-        if (isCourtyardChunk(chunkX, chunkZ)) return false;
-        int segment = floor / 10;
-        boolean isCurrent = isStairForSegment(chunkX, chunkZ, segment);
-        boolean isPreviousTop = (floor % 10 == 0) && isStairForSegment(chunkX, chunkZ, segment - 1);
-        return isCurrent || isPreviousTop;
+        return GigakhrushchLayout.isStairChunkForFloor(chunkX, chunkZ, floor);
     }
 
     public static boolean isElevatorChunk(int chunkX, int chunkZ) {
-        if (isCourtyardChunk(chunkX, chunkZ)) return false;
-        return Math.floorMod(chunkX * 13 + chunkZ * 19, 16) == 3;
+        return GigakhrushchLayout.isElevatorChunk(chunkX, chunkZ);
     }
 
-    private FloorArchetype getFloorArchetype(int floor) {
-        if (floor % 40 == 39) return FloorArchetype.PURGED;
-        if (floor % 24 == 0 && floor > 0) return FloorArchetype.FLOODED_TECHNICAL;
-        if (floor % 24 == 6) return FloorArchetype.ADMINISTRATION;
-        if (floor % 24 == 12) return FloorArchetype.INDUSTRIAL;
-        if (floor % 24 == 18) return FloorArchetype.LABORATORY;
-        return FloorArchetype.RESIDENTIAL;
+    public static GigakhrushchLayout.CourtyardType getCourtyardType(int chunkX, int chunkZ) {
+        return GigakhrushchLayout.getCourtyardType(chunkX, chunkZ);
+    }
+
+    public static GigakhrushchLayout.FloorArchetype getFloorArchetype(int floor) {
+        return GigakhrushchLayout.getFloorArchetype(floor);
     }
 
     private void generateGigakhrushch(Chunk chunk) {
@@ -154,6 +166,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
 
         boolean isCourtyard = isCourtyardChunk(chunkX, chunkZ);
         boolean isElevator = isElevatorChunk(chunkX, chunkZ);
+        boolean isMetroLine = isMetroLineChunk(chunkZ);
 
         // Foundation at Y=0..2
         for (int lx = 0; lx < 16; lx++) {
@@ -174,57 +187,112 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             FloorArchetype archetype = getFloorArchetype(floor);
             long floorSeed = ((long) chunkX * 3129871L) ^ ((long) chunkZ * 6187913L) ^ ((long) floor * 1013904223L);
 
-            int currentSeg = floor / 10;
-            boolean isCurrentSeg = isStairForSegment(chunkX, chunkZ, currentSeg);
-            boolean isPrevSegTop = (floor % 10 == 0) && isStairForSegment(chunkX, chunkZ, currentSeg - 1);
-            boolean isStair = isCurrentSeg || isPrevSegTop;
+            int tier = getStairTierForFloor(floor);
+            boolean isCurrentTier = isStairForTier(chunkX, chunkZ, tier);
+            boolean isPrevTierTop = isBoundaryFloor(floor) && isStairForTier(chunkX, chunkZ, tier - 1);
+            boolean isStair = isCurrentTier || isPrevTierTop;
+            boolean isMetroTransit = isMetroFloor(floor) && isMetroLine;
 
             if (isCourtyard) {
-                // Vertical courtyard-well lightwell
-                generateCourtyardChunk(chunk, mutable, baseY, floor, p46, air, ironBars, chains, emergLamp);
+                // Vertical courtyard-well lightwell (variable geometry, window entropy, balconies, metro skybridge)
+                generateCourtyardChunk(chunk, mutable, chunkX, chunkZ, baseY, floor, p46, air, ironBars, chains, emergLamp);
                 continue;
             }
 
             // 1. Generate floor slab at baseY
-            generateFloorSlab(chunk, mutable, baseY, floor, archetype, isStair, isCurrentSeg, isPrevSegTop, isElevator, p46, air);
+            boolean isBottomLanding = (floor == 1) || (isCurrentTier && isBoundaryFloor(floor));
+            generateFloorSlab(chunk, mutable, baseY, floor, archetype, isStair, isBottomLanding, isElevator, isMetroTransit, p46, air);
 
-            // 2. Generate corridors and perimeter walls
-            generateCorridorsAndWalls(chunk, mutable, baseY, floor, archetype, p46, painted, air, fluorLamp, emergLamp,
-                    hermeticDoorLowerN, hermeticDoorUpperN, hermeticDoorLowerS, hermeticDoorUpperS,
-                    hermeticDoorLowerE, hermeticDoorUpperE, hermeticDoorLowerW, hermeticDoorUpperW);
+            if (isMetroTransit) {
+                // Procedural Metro Station or Tunnel Artery
+                generateMetroSegment(chunk, mutable, chunkX, chunkZ, baseY, floor, p46, air, ironBars, chains, emergLamp, fluorLamp, floorSeed);
+                // Connect approach corridors at lx=7..8
+                for (int lx = 7; lx <= 8; lx++) {
+                    for (int lz = 0; lz <= 2; lz++) {
+                        for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                            chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                        }
+                    }
+                    for (int lz = 13; lz <= 15; lz++) {
+                        for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                            chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                        }
+                    }
+                }
+            } else {
+                // 2. Generate corridors and perimeter walls
+                generateCorridorsAndWalls(chunk, mutable, baseY, floor, archetype, p46, painted, air, fluorLamp, emergLamp,
+                        hermeticDoorLowerN, hermeticDoorUpperN, hermeticDoorLowerS, hermeticDoorUpperS,
+                        hermeticDoorLowerE, hermeticDoorUpperE, hermeticDoorLowerW, hermeticDoorUpperW);
 
-            // 3. Generate Segmented Stairwell in Quadrant 1 (lx in 1..6, lz in 1..6)
-            if (isStair) {
-                generateSegmentedStairwell(chunk, mutable, baseY, floor, isCurrentSeg, isPrevSegTop, p46, painted, air, ironBars, emergLamp);
+                // 3. Generate Segmented Stairwell in Quadrant 1 (lx in 1..6, lz in 1..6)
+                if (isStair) {
+                    generateSegmentedStairwell(chunk, mutable, baseY, floor, isCurrentTier, isPrevTierTop, p46, painted, air, ironBars, emergLamp);
+                }
+
+                // 4. Generate Elevator Shaft & Cabin in Quadrant 4 (lx in 10..14, lz in 10..14)
+                if (isElevator) {
+                    generateElevatorShaft(chunk, mutable, baseY, floor, p46, air, chains, ironBars, elevatorDoorLower, elevatorDoorUpper, emergLamp);
+                }
+
+                // 5. Generate Room Interiors in remaining quadrants with rich 24-variant catalog
+                generateRoomQuadrants(chunk, mutable, baseY, floor, floorSeed, archetype, isStair, isElevator, p46, air);
             }
-
-            // 4. Generate Elevator Shaft & Cabin in Quadrant 4 (lx in 10..14, lz in 10..14)
-            if (isElevator) {
-                generateElevatorShaft(chunk, mutable, baseY, floor, p46, air, chains, ironBars, elevatorDoorLower, elevatorDoorUpper, emergLamp);
-            }
-
-            // 5. Generate Room Interiors in remaining quadrants with rich 12-variant catalog
-            generateRoomQuadrants(chunk, mutable, baseY, floor, floorSeed, archetype, isStair, isElevator, p46, air);
         }
     }
 
-    private void generateCourtyardChunk(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor,
+    private void generateCourtyardChunk(Chunk chunk, BlockPos.Mutable mutable, int chunkX, int chunkZ, int baseY, int floor,
                                         BlockState p46, BlockState air, BlockState ironBars, BlockState chains, BlockState emergLamp) {
-        BlockState glass = Blocks.LIGHT_GRAY_STAINED_GLASS_PANE.getDefaultState();
-        BlockState planks = Blocks.OAK_PLANKS.getDefaultState();
+        CourtyardType cType = getCourtyardType(chunkX, chunkZ);
 
-        // Floor slab: Central void is strictly 4..11 (perimeter 0..3 and 12..15 is solid floor)
-        // This ensures facade walls at lx=3,12 and lz=3,12 sit firmly on a solid slab with no air gaps!
+        int minVoid, maxVoid;
+        switch (cType) {
+            case LIGHTWELL_4X4 -> { minVoid = 6; maxVoid = 9; }
+            case CHASM_12X12   -> { minVoid = 2; maxVoid = 13; }
+            case STEPPED_TERRACE -> {
+                if (floor < 50) {
+                    minVoid = 6; maxVoid = 9;   // Lower tiers: 4x4 narrow vent shaft
+                } else if (floor < 110) {
+                    minVoid = 4; maxVoid = 11;  // Mid tiers: 8x8 standard well
+                } else {
+                    minVoid = 2; maxVoid = 13;  // Upper tiers: 12x12 colossal abyss
+                }
+            }
+            default -> { minVoid = 4; maxVoid = 11; }
+        }
+
+        int facadeMin = minVoid - 1;
+        int facadeMax = maxVoid + 1;
+        int centerCoord = (minVoid + maxVoid) / 2;
+
+        long courtyardSeed = ((long) chunkX * 73856093L) ^ ((long) chunkZ * 19349663L);
+        int netInterval = 8 + Math.floorMod(courtyardSeed >> 3, 9); // between 8 and 16 floors
+        int catwalkInterval = 14 + Math.floorMod(courtyardSeed >> 7, 13); // between 14 and 26 floors
+        int clothesInterval = 3 + Math.floorMod(courtyardSeed >> 11, 3); // between 3 and 5 floors
+
+        boolean hasCatchNet = (floor % netInterval == 0);
+        boolean hasCatwalk = (floor % catwalkInterval == 0) && (cType != CourtyardType.CHASM_12X12);
+        boolean hasClothesLine = (floor % clothesInterval == 0);
+        boolean isMetroBridge = isMetroFloor(floor) && isMetroLineChunk(chunkZ);
+
+        // 1. Floor slab at baseY:
+        // Any block outside minVoid..maxVoid is solid P46
         for (int lx = 0; lx < 16; lx++) {
             for (int lz = 0; lz < 16; lz++) {
-                boolean isCenterVoid = (lx >= 4 && lx <= 11 && lz >= 4 && lz <= 11);
-                if (isCenterVoid) {
-                    if (floor % 12 == 0) {
-                        // Safety catch-net every 12 floors
+                boolean isVoid = (lx >= minVoid && lx <= maxVoid && lz >= minVoid && lz <= maxVoid);
+                if (isVoid) {
+                    if (isMetroBridge && (lz >= 6 && lz <= 9)) {
+                        // Metro sky-bridge base
+                        if (lz == 7 || lz == 8) {
+                            chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.REDSTONE_BLOCK.getDefaultState(), false);
+                        } else {
+                            chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.STONE_BRICKS.getDefaultState(), false);
+                        }
+                    } else if (hasCatchNet) {
                         chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.COBWEB.getDefaultState(), false);
-                        if (lx == 7 && lz == 7) {
+                        if (lx == centerCoord && lz == centerCoord) {
                             chunk.setBlockState(mutable.set(lx, baseY + 1, lz), ModBlocks.OLD_TV.getDefaultState(), false);
-                        } else if (lx == 5 && lz == 9) {
+                        } else if (lx == minVoid + 1 && lz == maxVoid - 1) {
                             chunk.setBlockState(mutable.set(lx, baseY + 1, lz), Blocks.SKELETON_SKULL.getDefaultState(), false);
                         }
                     } else {
@@ -236,27 +304,46 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        boolean hasCatwalk = (floor % 24 == 12);
-
-        // Facade walls looking into the courtyard at lx=3, lx=12, lz=3, lz=12
-        for (int lx = 3; lx <= 12; lx++) {
-            for (int lz = 3; lz <= 12; lz++) {
-                boolean isFacade = (lx == 3 || lx == 12 || lz == 3 || lz == 12);
+        // 2. Facade walls and courtyard interior
+        for (int lx = facadeMin; lx <= facadeMax; lx++) {
+            for (int lz = facadeMin; lz <= facadeMax; lz++) {
+                boolean isFacade = (lx == facadeMin || lx == facadeMax || lz == facadeMin || lz == facadeMax);
                 if (isFacade) {
                     for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
-                        // Catwalk access doorway at lz=7
-                        if (hasCatwalk && lz == 7 && (lx == 3 || lx == 12) && (y == baseY + 1 || y == baseY + 2)) {
+                        // Catwalk access doorway
+                        if (hasCatwalk && lz == centerCoord && (lx == facadeMin || lx == facadeMax) && (y == baseY + 1 || y == baseY + 2)) {
                             chunk.setBlockState(mutable.set(lx, y, lz), air, false);
                             continue;
                         }
 
-                        // Window placement
-                        boolean isWindowPos = (y == baseY + 2 || y == baseY + 3) && (lx % 3 == 0 || lz % 3 == 0);
+                        // Metro sky-bridge portal
+                        if (isMetroBridge && (lz >= 6 && lz <= 9) && (lx == facadeMin || lx == facadeMax)) {
+                            chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                            continue;
+                        }
+
+                        // Window placement with entropy
+                        boolean isWindowPos = (y == baseY + 2 || y == baseY + 3) && ((lx % 3 == 0) || (lz % 3 == 0));
                         if (isWindowPos) {
-                            BlockState windowState = (lx + lz + floor) % 5 == 0 ? planks : ((lx + lz) % 2 == 0 ? glass : ironBars);
-                            chunk.setBlockState(mutable.set(lx, y, lz), windowState, false);
+                            int windowSeed = lx * 31 + lz * 17 + floor * 7;
+                            BlockState windowBlock = switch (Math.floorMod(windowSeed, 6)) {
+                                case 0 -> Blocks.OAK_PLANKS.getDefaultState();
+                                case 1 -> ironBars;
+                                case 2 -> Blocks.COBWEB.getDefaultState();
+                                default -> Blocks.LIGHT_GRAY_STAINED_GLASS_PANE.getDefaultState();
+                            };
+                            chunk.setBlockState(mutable.set(lx, y, lz), windowBlock, false);
                         } else {
                             chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
+                        }
+                    }
+
+                    // External air conditioning units BK-1500 under windows
+                    if ((lx + lz + floor) % 8 == 0) {
+                        int acX = (lx == facadeMin) ? lx - 1 : ((lx == facadeMax) ? lx + 1 : lx);
+                        int acZ = (lz == facadeMin) ? lz - 1 : ((lz == facadeMax) ? lz + 1 : lz);
+                        if (acX >= 0 && acX < 16 && acZ >= 0 && acZ < 16) {
+                            chunk.setBlockState(mutable.set(acX, baseY + 1, acZ), Blocks.DROPPER.getDefaultState(), false);
                         }
                     }
                 } else {
@@ -268,30 +355,54 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        // Clotheslines and laundry stretched across courtyard
-        if (floor % 3 == 0) {
-            int lineZ = 5 + (floor % 6);
-            for (int lx = 4; lx <= 11; lx++) {
+        // 3. Sky-Bridge for Metro line crossing courtyard
+        if (isMetroBridge) {
+            for (int lx = minVoid; lx <= maxVoid; lx++) {
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 7), Blocks.POWERED_RAIL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 8), Blocks.POWERED_RAIL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 6), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 9), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(lx, baseY + 2, 6), ironBars, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 2, 9), ironBars, false);
+                chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, 6), p46, false);
+                chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, 7), p46, false);
+                chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, 8), p46, false);
+                chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, 9), p46, false);
+            }
+        }
+
+        // 4. Catwalk bridge
+        if (hasCatwalk && !isMetroBridge) {
+            for (int lx = minVoid; lx <= maxVoid; lx++) {
+                chunk.setBlockState(mutable.set(lx, baseY + 1, centerCoord), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(lx, baseY + 2, centerCoord - 1), ironBars, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 2, centerCoord + 1), ironBars, false);
+            }
+        }
+
+        // 5. Cantilevered balconies protruding into the void
+        if (floor % 7 == 0 && cType != CourtyardType.LIGHTWELL_4X4 && !isMetroBridge) {
+            chunk.setBlockState(mutable.set(minVoid, baseY + 1, centerCoord), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+            chunk.setBlockState(mutable.set(minVoid, baseY + 2, centerCoord), Blocks.FLOWER_POT.getDefaultState(), false);
+            chunk.setBlockState(mutable.set(minVoid, baseY + 2, centerCoord - 1), ironBars, false);
+            chunk.setBlockState(mutable.set(minVoid, baseY + 2, centerCoord + 1), ironBars, false);
+        }
+
+        // 6. Clotheslines
+        if (hasClothesLine && !isMetroBridge) {
+            int lineZ = minVoid + 1 + Math.floorMod(floor, Math.max(1, maxVoid - minVoid - 1));
+            for (int lx = minVoid; lx <= maxVoid; lx++) {
                 chunk.setBlockState(mutable.set(lx, baseY + 3, lineZ), chains, false);
-                if (lx == 6 || lx == 9) {
+                if (lx % 3 == 0) {
                     chunk.setBlockState(mutable.set(lx, baseY + 2, lineZ), Blocks.WHITE_CARPET.getDefaultState(), false);
                 }
             }
         }
 
-        // Service catwalk crossing the courtyard
-        if (hasCatwalk) {
-            for (int lx = 4; lx <= 11; lx++) {
-                chunk.setBlockState(mutable.set(lx, baseY + 1, 7), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(lx, baseY + 2, 6), ironBars, false);
-                chunk.setBlockState(mutable.set(lx, baseY + 2, 8), ironBars, false);
-            }
-        }
-
-        // Surrounding perimeter corridors
+        // 7. Surrounding perimeter corridors
         for (int lx = 0; lx < 16; lx++) {
             for (int lz = 0; lz < 16; lz++) {
-                if (lx < 3 || lx > 12 || lz < 3 || lz > 12) {
+                if (lx < facadeMin || lx > facadeMax || lz < facadeMin || lz > facadeMax) {
                     for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
                         chunk.setBlockState(mutable.set(lx, y, lz), air, false);
                     }
@@ -304,7 +415,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
     }
 
     private void generateFloorSlab(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor, FloorArchetype archetype,
-                                  boolean isStair, boolean isCurrentSeg, boolean isPrevSegTop, boolean isElevatorChunk, BlockState p46, BlockState air) {
+                                  boolean isStair, boolean isBottomLanding, boolean isElevatorChunk, boolean isMetroTransit, BlockState p46, BlockState air) {
         BlockState floorState = switch (archetype) {
             case PURGED -> Blocks.BLACKSTONE.getDefaultState();
             case LABORATORY -> Blocks.WHITE_CONCRETE.getDefaultState();
@@ -313,11 +424,19 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             default -> p46;
         };
 
-        // Floor 1 or bottom floor of a segment (floor % 10 == 0) has a solid floor slab so players don't fall into the void!
-        boolean isBottomLanding = (floor == 1) || (isCurrentSeg && (floor % 10 == 0));
-
         for (int lx = 0; lx < 16; lx++) {
             for (int lz = 0; lz < 16; lz++) {
+                if (isMetroTransit) {
+                    if (lz == 7 || lz == 8) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.REDSTONE_BLOCK.getDefaultState(), false);
+                    } else if (lz == 6 || lz == 9) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.GRAVEL.getDefaultState(), false);
+                    } else {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
+                    }
+                    continue;
+                }
+
                 // Stair opening only at lx in 2..5, lz in 1..4 (lz 5..6 remains solid landing!)
                 boolean isStairOpening = isStair && !isBottomLanding && (lx >= 2 && lx <= 5 && lz >= 1 && lz <= 4);
                 // Elevator hoistway opening at lx in 11..13, lz == 13
@@ -330,6 +449,193 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 }
             }
         }
+    }
+
+    private void generateMetroSegment(Chunk chunk, BlockPos.Mutable mutable, int chunkX, int chunkZ, int baseY, int floor,
+                                      BlockState p46, BlockState air, BlockState ironBars, BlockState chains, BlockState emergLamp,
+                                      BlockState fluorLamp, long seed) {
+        boolean isStation = isMetroStationChunk(chunkX, chunkZ);
+        BlockState stoneBricks = Blocks.STONE_BRICKS.getDefaultState();
+        BlockState chiseledStone = Blocks.CHISELED_STONE_BRICKS.getDefaultState();
+        BlockState quartz = Blocks.SMOOTH_QUARTZ.getDefaultState();
+        BlockState andesite = Blocks.POLISHED_ANDESITE.getDefaultState();
+        BlockState redstoneBlock = Blocks.REDSTONE_BLOCK.getDefaultState();
+        BlockState poweredRail = Blocks.POWERED_RAIL.getDefaultState();
+        BlockState yellowTerracotta = Blocks.YELLOW_TERRACOTTA.getDefaultState();
+        BlockState blackConcrete = Blocks.BLACK_CONCRETE.getDefaultState();
+        BlockState ironBlock = Blocks.IRON_BLOCK.getDefaultState();
+
+        if (isStation) {
+            // === SOVIET METRO STATION («Сороконожка») ===
+            // 1. Excavate station hall from lx=0..15, lz=3..12
+            for (int lx = 0; lx < 16; lx++) {
+                for (int lz = 3; lz <= 12; lz++) {
+                    for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                        chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                    }
+                }
+            }
+
+            // 2. Track bed in center (lz=7..8)
+            for (int lx = 0; lx < 16; lx++) {
+                chunk.setBlockState(mutable.set(lx, baseY, 7), redstoneBlock, false);
+                chunk.setBlockState(mutable.set(lx, baseY, 8), redstoneBlock, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 7), poweredRail, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 8), poweredRail, false);
+            }
+
+            // 3. Station Platforms (North lz=4..6, South lz=9..11) at baseY + 1
+            for (int lx = 0; lx < 16; lx++) {
+                for (int lz = 4; lz <= 6; lz++) {
+                    BlockState plat = (lz == 6) ? yellowTerracotta : (((lx + lz) % 2 == 0) ? quartz : andesite);
+                    chunk.setBlockState(mutable.set(lx, baseY + 1, lz), plat, false);
+                }
+                for (int lz = 9; lz <= 11; lz++) {
+                    BlockState plat = (lz == 9) ? yellowTerracotta : (((lx + lz) % 2 == 0) ? quartz : andesite);
+                    chunk.setBlockState(mutable.set(lx, baseY + 1, lz), plat, false);
+                }
+            }
+
+            // 4. Station Pillars & Ceiling Vault
+            for (int lx = 0; lx < 16; lx++) {
+                // Vaulted ceiling across lz=3..12
+                for (int lz = 3; lz <= 12; lz++) {
+                    chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, lz), stoneBricks, false);
+                }
+                // Pillars
+                if (lx == 2 || lx == 6 || lx == 10 || lx == 14) {
+                    for (int y = baseY + 2; y < baseY + FLOOR_HEIGHT - 1; y++) {
+                        chunk.setBlockState(mutable.set(lx, y, 4), Blocks.QUARTZ_PILLAR.getDefaultState(), false);
+                        chunk.setBlockState(mutable.set(lx, y, 11), Blocks.QUARTZ_PILLAR.getDefaultState(), false);
+                    }
+                }
+                // Platform lighting
+                if (lx % 4 == 2) {
+                    chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, 5), fluorLamp, false);
+                    chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, 10), fluorLamp, false);
+                }
+            }
+
+            // 5. Waiting Benches
+            BlockState benchNorth = Blocks.POLISHED_DEEPSLATE_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH);
+            BlockState benchSouth = Blocks.POLISHED_DEEPSLATE_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.SOUTH);
+            chunk.setBlockState(mutable.set(4, baseY + 2, 5), benchNorth, false);
+            chunk.setBlockState(mutable.set(11, baseY + 2, 5), benchNorth, false);
+            chunk.setBlockState(mutable.set(4, baseY + 2, 10), benchSouth, false);
+            chunk.setBlockState(mutable.set(11, baseY + 2, 10), benchSouth, false);
+
+            // 6. Station Signs with Lore names
+            int stationId = Math.floorMod(chunkX / 4, 6);
+            String stationName = switch (stationId) {
+                case 0 -> "«ПИЩКОНЦЕНТРАТНАЯ»";
+                case 1 -> "«БЛОК-404»";
+                case 2 -> "«ОЧИСТНАЯ»";
+                case 3 -> "«МЕТРОСТРОЙ-СЕВЕР»";
+                case 4 -> "«НИИ-ХИММАШ»";
+                default -> "«ЗАВОДСКАЯ»";
+            };
+            placeWallNotice(chunk, mutable.set(8, baseY + 3, 3), Direction.SOUTH, "§fСТАНЦИЯ", "§6" + stationName, "§0Линия ГО-Ликвидация", "§0Посадка на дрезины", DyeColor.ORANGE);
+            placeWallNotice(chunk, mutable.set(8, baseY + 3, 12), Direction.NORTH, "§fСТАНЦИЯ", "§6" + stationName, "§0Линия ГО-Ликвидация", "§0Посадка на дрезины", DyeColor.ORANGE);
+
+            // 7. Station Supply Chest (Minecarts, Rails, Torches, Coal, Bread)
+            placeStationChest(chunk, mutable.set(8, baseY + 2, 5));
+
+            // 8. Station Hermetic Blast Gates (Гермоворота В-1) at North and South entrances
+            // North portal at lx=7..8, lz=3
+            chunk.setBlockState(mutable.set(6, baseY + 2, 3), yellowTerracotta, false);
+            chunk.setBlockState(mutable.set(9, baseY + 2, 3), blackConcrete, false);
+            chunk.setBlockState(mutable.set(6, baseY + 3, 3), blackConcrete, false);
+            chunk.setBlockState(mutable.set(9, baseY + 3, 3), yellowTerracotta, false);
+            chunk.setBlockState(mutable.set(7, baseY + 4, 3), ironBlock, false);
+            chunk.setBlockState(mutable.set(8, baseY + 4, 3), ironBlock, false);
+            chunk.setBlockState(mutable.set(7, baseY + 5, 3), chains, false);
+            chunk.setBlockState(mutable.set(8, baseY + 5, 3), chains, false);
+            chunk.setBlockState(mutable.set(6, baseY + 4, 3), Blocks.GRINDSTONE.getDefaultState(), false);
+            chunk.setBlockState(mutable.set(7, baseY + 2, 3), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.SOUTH), false);
+            chunk.setBlockState(mutable.set(7, baseY + 3, 3), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.SOUTH), false);
+            chunk.setBlockState(mutable.set(8, baseY + 2, 3), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.SOUTH), false);
+            chunk.setBlockState(mutable.set(8, baseY + 3, 3), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.SOUTH), false);
+
+            // South portal at lx=7..8, lz=12
+            chunk.setBlockState(mutable.set(6, baseY + 2, 12), yellowTerracotta, false);
+            chunk.setBlockState(mutable.set(9, baseY + 2, 12), blackConcrete, false);
+            chunk.setBlockState(mutable.set(6, baseY + 3, 12), blackConcrete, false);
+            chunk.setBlockState(mutable.set(9, baseY + 3, 12), yellowTerracotta, false);
+            chunk.setBlockState(mutable.set(7, baseY + 4, 12), ironBlock, false);
+            chunk.setBlockState(mutable.set(8, baseY + 4, 12), ironBlock, false);
+            chunk.setBlockState(mutable.set(7, baseY + 5, 12), chains, false);
+            chunk.setBlockState(mutable.set(8, baseY + 5, 12), chains, false);
+            chunk.setBlockState(mutable.set(6, baseY + 4, 12), Blocks.GRINDSTONE.getDefaultState(), false);
+            chunk.setBlockState(mutable.set(7, baseY + 2, 12), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.NORTH), false);
+            chunk.setBlockState(mutable.set(7, baseY + 3, 12), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.NORTH), false);
+            chunk.setBlockState(mutable.set(8, baseY + 2, 12), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.NORTH), false);
+            chunk.setBlockState(mutable.set(8, baseY + 3, 12), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.NORTH), false);
+
+            // Wall enclosures at lz=3 and lz=12
+            for (int lx = 0; lx < 16; lx++) {
+                if (lx < 6 || lx > 9) {
+                    for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                        chunk.setBlockState(mutable.set(lx, y, 3), p46, false);
+                        chunk.setBlockState(mutable.set(lx, y, 12), p46, false);
+                    }
+                }
+            }
+        } else {
+            // === PROCEDURAL RAILWAY TUNNEL SEGMENT ===
+            // 1. Excavate tunnel lx=0..15, lz=5..10
+            for (int lx = 0; lx < 16; lx++) {
+                for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                    chunk.setBlockState(mutable.set(lx, y, 5), (lx % 4 == 0) ? chiseledStone : stoneBricks, false);
+                    chunk.setBlockState(mutable.set(lx, y, 10), (lx % 4 == 0) ? chiseledStone : stoneBricks, false);
+                }
+                for (int lz = 6; lz <= 9; lz++) {
+                    for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT - 1; y++) {
+                        chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                    }
+                }
+                for (int lz = 5; lz <= 10; lz++) {
+                    chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, lz), stoneBricks, false);
+                }
+
+                // Walkways & Powered Rails
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 6), andesite, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 9), andesite, false);
+                chunk.setBlockState(mutable.set(lx, baseY, 7), redstoneBlock, false);
+                chunk.setBlockState(mutable.set(lx, baseY, 8), redstoneBlock, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 7), poweredRail, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 8), poweredRail, false);
+
+                // Hanging cables & emergency lamps
+                if (lx % 4 == 0) {
+                    chunk.setBlockState(mutable.set(lx, baseY + 4, 7), chains, false);
+                    chunk.setBlockState(mutable.set(lx, baseY + 3, 7), emergLamp, false);
+                }
+            }
+
+            // Maintenance alcove at lx=8, lz=5
+            chunk.setBlockState(mutable.set(8, baseY + 1, 5), air, false);
+            chunk.setBlockState(mutable.set(8, baseY + 2, 5), air, false);
+            chunk.setBlockState(mutable.set(8, baseY + 1, 4), air, false);
+            chunk.setBlockState(mutable.set(8, baseY + 2, 4), air, false);
+            placeBarrel(chunk, mutable.set(8, baseY + 1, 4), LootTables.ABANDONED_MINESHAFT_CHEST, seed);
+            chunk.setBlockState(mutable.set(8, baseY + 3, 4), emergLamp, false);
+
+            // Tunnel Access Door to Sector Corridor at lx=7, lz=10
+            chunk.setBlockState(mutable.set(7, baseY + 1, 10), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.NORTH), false);
+            chunk.setBlockState(mutable.set(7, baseY + 2, 10), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.NORTH), false);
+        }
+    }
+
+    private void placeStationChest(Chunk chunk, BlockPos pos) {
+        chunk.setBlockState(pos, Blocks.CHEST.getDefaultState(), false);
+        ChestBlockEntity chest = new ChestBlockEntity(pos.toImmutable(), Blocks.CHEST.getDefaultState());
+        chest.setStack(0, new ItemStack(Items.MINECART, 2));
+        chest.setStack(1, new ItemStack(Items.CHEST_MINECART, 1));
+        chest.setStack(2, new ItemStack(Items.POWERED_RAIL, 16));
+        chest.setStack(3, new ItemStack(Items.COAL, 16));
+        chest.setStack(4, new ItemStack(Items.TORCH, 16));
+        chest.setStack(5, new ItemStack(Items.BREAD, 8));
+        chunk.setBlockEntity(chest);
     }
 
     private void generateCorridorsAndWalls(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor, FloorArchetype archetype,
@@ -633,7 +939,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        int variant = Math.abs((int) (seed % 12));
+        int variant = Math.abs((int) (seed % 24));
 
         switch (archetype) {
             case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, variant, minX, maxX, minZ, maxZ, doorX, doorZ, seed);
@@ -803,6 +1109,194 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.OAK_PLANKS.getDefaultState(), false);
                 placeBarrel(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.VILLAGE_SAVANNA_HOUSE_CHEST, seed);
+            }
+            case 12 -> {
+                // 13. Sector Post Office (Почтовое отделение Сектора 14)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SMOOTH_STONE.getDefaultState(), false);
+                    }
+                }
+                for (int lz = minZ; lz <= maxZ; lz++) {
+                    chunk.setBlockState(mutable.set(midX, baseY + 1, lz), Blocks.OAK_TRAPDOOR.getDefaultState().with(TrapdoorBlock.OPEN, false), false);
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.HEAVY_WEIGHTED_PRESSURE_PLATE.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(minX, baseY + 1, minZ), LootTables.VILLAGE_DESERT_HOUSE_CHEST, seed);
+                placeBarrel(chunk, mutable.set(minX, baseY + 2, minZ), LootTables.VILLAGE_PLAINS_CHEST, seed + 1);
+                placeChest(chunk, mutable.set(minX, baseY + 1, maxZ), LootTables.SHIPWRECK_MAP_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§1ПОЧТА СЕКТОРА 14", "§0Приём посылок: ЗАКРЫТ", "§0Письма не доходят", "§0с 1986 года", DyeColor.BLUE);
+            }
+            case 13 -> {
+                // 14. Medical Isolation Ward (Медпункт / Изолятор)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.WHITE_CONCRETE.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.WHITE_BED.getDefaultState().with(BedBlock.FACING, Direction.SOUTH).with(BedBlock.PART, BedPart.FOOT), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ + 1), Blocks.WHITE_BED.getDefaultState().with(BedBlock.FACING, Direction.SOUTH).with(BedBlock.PART, BedPart.HEAD), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ), Blocks.IRON_BARS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 2, minZ), Blocks.TRIPWIRE_HOOK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CAULDRON.getDefaultState(), false);
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.IGLOO_CHEST_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(maxX, baseY + 2, midZ), Direction.WEST, "§4ИЗОЛЯТОР №7-Б", "§0Карантин по спорам", "§0Вход в ОЗК", "§0Пациент №41 сбежал", DyeColor.RED);
+            }
+            case 14 -> {
+                // 15. Sector Canteen (Столовая общепита №19)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_GRANITE.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ), ModBlocks.FOOD_DISPENSER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ + 1), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ + 2), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(minX, baseY + 1, minZ), LootTables.VILLAGE_BUTCHER_CHEST, seed);
+                placeBarrel(chunk, mutable.set(minX, baseY + 1, minZ + 1), LootTables.VILLAGE_PLAINS_CHEST, seed);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, midZ), Blocks.OAK_FENCE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 2, midZ), Blocks.HEAVY_WEIGHTED_PRESSURE_PLATE.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§2СТОЛОВАЯ №19", "§0Суп концентратный", "§0Хлеб белковый", "§0Сырую биомассу не брать", DyeColor.GREEN);
+            }
+            case 15 -> {
+                // 16. Boiler & Thermal Substation (Бойлерная / Теплоузел)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.MOSSY_COBBLESTONE.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.BLAST_FURNACE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HOPPER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ - 1), Blocks.CAULDRON.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.LIGHTNING_ROD.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.LEVER.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.VILLAGE_TOOLSMITH_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ТЕПЛОУЗЕЛ ТУ-4", "§0Давление 24 атм", "§0Вентиль не крутить!", "§0Утечка пара смертельна", DyeColor.RED);
+            }
+            case 16 -> {
+                // 17. Security Checkpoint (КПП Сектора 9)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
+                    }
+                }
+                for (int lz = minZ; lz <= maxZ; lz++) {
+                    if (lz == midZ) {
+                        chunk.setBlockState(mutable.set(midX, baseY + 1, lz), Blocks.OAK_FENCE_GATE.getDefaultState(), false);
+                    } else {
+                        chunk.setBlockState(mutable.set(midX, baseY + 1, lz), Blocks.IRON_BARS.getDefaultState(), false);
+                        chunk.setBlockState(mutable.set(midX, baseY + 2, lz), Blocks.IRON_BARS.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.LECTERN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.BELL.getDefaultState(), false);
+                placeChest(chunk, mutable.set(minX, baseY + 1, maxZ), LootTables.VILLAGE_WEAPONSMITH_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4КПП СЕКТОРА 9", "§0Предъявите пропуск", "§0и талон на жизнь", "§0Без штампа — ликвидация", DyeColor.RED);
+            }
+            case 17 -> {
+                // 18. Inverted Gravity Anomaly Flat (Аномальная комната)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY + 5, lz), Blocks.DARK_OAK_PLANKS.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 4, minZ), ModBlocks.WALL_CARPET.getDefaultState().with(WallCarpetBlock.FACING, Direction.SOUTH), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 4, midZ), Blocks.DARK_OAK_FENCE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 4, midZ), Blocks.DARK_OAK_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.EAST).with(StairsBlock.HALF, BlockHalf.TOP), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 4, maxZ), Blocks.SKELETON_SKULL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.LANTERN.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(minX, baseY + 1, minZ), LootTables.END_CITY_TREASURE_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§5АНОМАЛИЯ Г-11", "§0Гравитационный сдвиг", "§0Не прыгать!", "§0Смерть об потолок", DyeColor.PURPLE);
+            }
+            case 18 -> {
+                // 19. Civil Defense Filter Depot (Склад СИЗ и фильтров ГО)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SMOOTH_STONE.getDefaultState(), false);
+                    }
+                }
+                for (int lx = minX; lx <= maxX; lx += 2) {
+                    placeBarrel(chunk, mutable.set(lx, baseY + 1, minZ), LootTables.VILLAGE_FLETCHER_CHEST, seed + lx);
+                    placeBarrel(chunk, mutable.set(lx, baseY + 2, minZ), LootTables.VILLAGE_TOOLSMITH_CHEST, seed + lx * 2);
+                }
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.SIMPLE_DUNGEON_CHEST, seed);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.ANVIL.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§1СКЛАД СИЗ №3", "§0Фильтры ГП-5", "§0Срок годности: 1979", "§0Без маски вход закрыт", DyeColor.BLUE);
+            }
+            case 19 -> {
+                // 20. Cybernetics & Vacuum Tube Scrapyard (Мастерская ЭВМ)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.EXPOSED_COPPER.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.REPEATER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.COMPARATOR.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.COPPER_BULB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.LIGHTNING_ROD.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.CHISELED_COPPER.getDefaultState(), false);
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.ANCIENT_CITY_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§6ВЦ «ИСКРА-12»", "§0Вычислительный блок", "§0Не закорачивать!", "§0ЭВМ считает Самосбор", DyeColor.ORANGE);
+            }
+            case 20 -> {
+                // 21. Communal Laundry (Прачечная / Постирочная)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.CYAN_TERRACOTTA.getDefaultState(), false);
+                    }
+                }
+                for (int lx = minX; lx <= maxX; lx += 2) {
+                    chunk.setBlockState(mutable.set(lx, baseY + 1, minZ), Blocks.WATER_CAULDRON.getDefaultState(), false);
+                }
+                chunk.setBlockState(mutable.set(minX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.WHITE_CARPET.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.VILLAGE_SHEPARD_CHEST, seed);
+            }
+            case 21 -> {
+                // 22. Lenin Propaganda Red Corner (Красный уголок)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.RED_CONCRETE.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ), Blocks.GOLD_BLOCK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), Blocks.LECTERN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.RED_CARPET.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 3, minZ), Direction.SOUTH, "§4ЛЕНИН ЖИВ", "§4ПАРТИЯ ЕДИНА", "§0Пятилетку — в 3 дня!", "§0Догнать и перегнать", DyeColor.RED);
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.STRONGHOLD_LIBRARY_CHEST, seed);
+            }
+            case 22 -> {
+                // 23. Secret Panic Room behind Bookshelf (Тайная комната)
+                chunk.setBlockState(mutable.set(doorX, baseY + 1, doorZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SPRUCE_PLANKS.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.RED_BED.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.LANTERN.getDefaultState(), false);
+                placeChest(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.NETHER_BRIDGE_CHEST, seed);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.VILLAGE_PLAINS_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§2ДНЕВНИК ИНЖЕНЕРА", "§0Они замуровали выход", "§0У меня есть консервы", "§0Самосбор снаружи", DyeColor.GREEN);
+            }
+            default -> {
+                // 24. Mimic Nest Trap Room (Логово мимика)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SCULK.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CHEST.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.CHEST.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ + 1), Blocks.SCULK_SENSOR.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.COBWEB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.COBWEB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.COBWEB.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4НЕ ТРОГАЙ", "§4ОНИ ЖИВЫЕ", "§4ЭТО НЕ СУНДУК", "§4БЕГИ", DyeColor.RED);
             }
         }
     }
