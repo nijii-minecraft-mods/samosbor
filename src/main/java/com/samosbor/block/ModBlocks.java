@@ -32,6 +32,7 @@ public class ModBlocks {
     public static final Block CAST_IRON_RADIATOR = register("cast_iron_radiator", new CastIronRadiatorBlock(), Items.ANVIL);
     public static final Block GAS_STOVE = register("gas_stove", new GasStoveBlock(), Items.SMOKER);
     public static final Block RUSTY_SINK = register("rusty_sink", new RustySinkBlock(), Items.CAULDRON);
+    public static final Block GARBAGE_CHUTE = register("garbage_chute", new GarbageChuteBlock(), Items.HOPPER);
 
     // Elevator system blocks
     public static final Block ELEVATOR_DOOR = register("elevator_door", new ElevatorDoorBlock(), Items.COPPER_DOOR);

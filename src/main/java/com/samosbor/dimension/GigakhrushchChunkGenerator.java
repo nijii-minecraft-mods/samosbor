@@ -10,7 +10,6 @@ import com.samosbor.block.ModBlocks;
 import com.samosbor.block.OldTvBlock;
 import com.samosbor.block.RadioReceiverBlock;
 import com.samosbor.block.WallCarpetBlock;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.DoorBlock;
@@ -83,6 +82,22 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         PURGED
     }
 
+    public static boolean isCourtyardChunk(int chunkX, int chunkZ) {
+        return Math.floorMod(chunkX * 7 + chunkZ * 11, 14) == 5;
+    }
+
+    public static boolean isStairChunkForFloor(int chunkX, int chunkZ, int floor) {
+        if (isCourtyardChunk(chunkX, chunkZ)) return false;
+        int segment = floor / 10;
+        long seed = ((long) chunkX * 3129871L) ^ ((long) chunkZ * 6187913L) ^ ((long) segment * 1013904223L);
+        return Math.floorMod(seed, 9) == 0;
+    }
+
+    public static boolean isElevatorChunk(int chunkX, int chunkZ) {
+        if (isCourtyardChunk(chunkX, chunkZ)) return false;
+        return Math.floorMod(chunkX * 13 + chunkZ * 19, 16) == 3;
+    }
+
     private FloorArchetype getFloorArchetype(int floor) {
         if (floor % 40 == 39) return FloorArchetype.PURGED;
         if (floor % 24 == 0 && floor > 0) return FloorArchetype.FLOODED_TECHNICAL;
@@ -120,8 +135,8 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         BlockState elevatorDoorLower = ModBlocks.ELEVATOR_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.EAST);
         BlockState elevatorDoorUpper = ModBlocks.ELEVATOR_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.EAST);
 
-        boolean isStairChunk = Math.floorMod(chunkX + chunkZ, 5) == 0;
-        boolean isElevatorChunk = Math.floorMod(chunkX + chunkZ, 5) == 2;
+        boolean isCourtyard = isCourtyardChunk(chunkX, chunkZ);
+        boolean isElevator = isElevatorChunk(chunkX, chunkZ);
 
         // Foundation at Y=0..2
         for (int lx = 0; lx < 16; lx++) {
@@ -129,7 +144,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 for (int y = 0; y <= 2; y++) {
                     chunk.setBlockState(mutable.set(lx, y, lz), bedrock, false);
                 }
-                // Megastructure ceiling at Y=1020..1023
+                // Megastructure reinforced ceiling at Y=1020..1023
                 for (int y = 1020; y < MAX_HEIGHT; y++) {
                     chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
                 }
@@ -141,31 +156,128 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             int baseY = floor * FLOOR_HEIGHT;
             FloorArchetype archetype = getFloorArchetype(floor);
             long floorSeed = ((long) chunkX * 3129871L) ^ ((long) chunkZ * 6187913L) ^ ((long) floor * 1013904223L);
+            boolean isStair = isStairChunkForFloor(chunkX, chunkZ, floor);
+
+            if (isCourtyard) {
+                // Generate vertical courtyard-well chasm
+                generateCourtyardChunk(chunk, mutable, baseY, floor, p46, air, ironBars, chains, emergLamp);
+                continue;
+            }
 
             // 1. Generate floor slab at baseY
-            generateFloorSlab(chunk, mutable, baseY, archetype, isStairChunk, isElevatorChunk, p46, air);
+            generateFloorSlab(chunk, mutable, baseY, floor, archetype, isStair, isElevator, p46, air);
 
-            // 2. Generate corridors (lx=7..8 or lz=7..8) and walls (lx=6,9 or lz=6,9)
+            // 2. Generate corridors (lx=7..8 or lz=7..8) and walls
             generateCorridorsAndWalls(chunk, mutable, baseY, floor, archetype, p46, painted, air, fluorLamp, emergLamp,
                     hermeticDoorLowerN, hermeticDoorUpperN, hermeticDoorLowerS, hermeticDoorUpperS,
                     hermeticDoorLowerE, hermeticDoorUpperE, hermeticDoorLowerW, hermeticDoorUpperW);
 
-            // 3. Generate Stairwell in Quadrant 1 (lx in 2..5, lz in 2..5) if stair chunk
-            if (isStairChunk) {
-                generateStairwell(chunk, mutable, baseY, p46, painted, air, ironBars, emergLamp);
+            // 3. Generate 10-floor Segmented Stairwell in Quadrant 1 (lx in 1..6, lz in 1..6)
+            if (isStair) {
+                generateSegmentedStairwell(chunk, mutable, baseY, floor, p46, painted, air, ironBars, emergLamp);
             }
 
-            // 4. Generate Elevator Shaft & Cabin in Quadrant 4 (lx in 10..14, lz in 10..14) if elevator chunk
-            if (isElevatorChunk) {
+            // 4. Generate Elevator Shaft & Cabin in Quadrant 4 (lx in 10..14, lz in 10..14)
+            if (isElevator) {
                 generateElevatorShaft(chunk, mutable, baseY, floor, p46, air, chains, ironBars, elevatorDoorLower, elevatorDoorUpper, emergLamp);
             }
 
-            // 5. Generate Room Interiors in remaining quadrants
-            generateRoomQuadrants(chunk, mutable, baseY, floor, floorSeed, archetype, isStairChunk, isElevatorChunk, p46, air);
+            // 5. Generate Room Interiors in remaining quadrants with rich catalog
+            generateRoomQuadrants(chunk, mutable, baseY, floor, floorSeed, archetype, isStair, isElevator, p46, air);
         }
     }
 
-    private void generateFloorSlab(Chunk chunk, BlockPos.Mutable mutable, int baseY, FloorArchetype archetype,
+    private void generateCourtyardChunk(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor,
+                                        BlockState p46, BlockState air, BlockState ironBars, BlockState chains, BlockState emergLamp) {
+        BlockState glass = Blocks.LIGHT_GRAY_STAINED_GLASS_PANE.getDefaultState();
+        BlockState planks = Blocks.OAK_PLANKS.getDefaultState();
+
+        // Floor slab around perimeter (lx, lz 0..2 and 13..15), center 3..12 is OPEN CHASM!
+        for (int lx = 0; lx < 16; lx++) {
+            for (int lz = 0; lz < 16; lz++) {
+                boolean isCenterVoid = (lx >= 3 && lx <= 12 && lz >= 3 && lz <= 12);
+                if (isCenterVoid) {
+                    // Safety catch-net every 12 floors
+                    if (floor % 12 == 0) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.COBWEB.getDefaultState(), false);
+                        // Discarded junk on catch net
+                        if (lx == 7 && lz == 7) {
+                            chunk.setBlockState(mutable.set(lx, baseY + 1, lz), ModBlocks.OLD_TV.getDefaultState(), false);
+                        } else if (lx == 5 && lz == 9) {
+                            chunk.setBlockState(mutable.set(lx, baseY + 1, lz), Blocks.SKELETON_SKULL.getDefaultState(), false);
+                        }
+                    } else {
+                        // Open abyss air
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), air, false);
+                    }
+                } else {
+                    // Perimeter solid floor
+                    chunk.setBlockState(mutable.set(lx, baseY, lz), p46, false);
+                }
+            }
+        }
+
+        // Facade walls looking into the courtyard at lx=3, lx=12, lz=3, lz=12
+        for (int lx = 3; lx <= 12; lx++) {
+            for (int lz = 3; lz <= 12; lz++) {
+                boolean isFacade = (lx == 3 || lx == 12 || lz == 3 || lz == 12);
+                if (isFacade) {
+                    for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                        // Window placement on floors
+                        boolean isWindowPos = (y == baseY + 2 || y == baseY + 3) && (lx % 3 == 0 || lz % 3 == 0);
+                        if (isWindowPos) {
+                            // Some windows glass, some barred, some boarded
+                            BlockState windowState = (lx + lz + floor) % 5 == 0 ? planks : ((lx + lz) % 2 == 0 ? glass : ironBars);
+                            chunk.setBlockState(mutable.set(lx, y, lz), windowState, false);
+                        } else {
+                            chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
+                        }
+                    }
+                } else {
+                    // Interior courtyard space is pure air
+                    for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                        chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                    }
+                }
+            }
+        }
+
+        // Clotheslines and ropes stretched across the courtyard
+        if (floor % 3 == 0) {
+            int lineZ = 5 + (floor % 6);
+            for (int lx = 4; lx <= 11; lx++) {
+                chunk.setBlockState(mutable.set(lx, baseY + 3, lineZ), chains, false);
+                if (lx == 6 || lx == 9) {
+                    chunk.setBlockState(mutable.set(lx, baseY + 2, lineZ), Blocks.WHITE_CARPET.getDefaultState(), false);
+                }
+            }
+        }
+
+        // Service catwalk crossing the courtyard every 24 floors
+        if (floor % 24 == 12) {
+            for (int lx = 3; lx <= 12; lx++) {
+                chunk.setBlockState(mutable.set(lx, baseY + 1, 7), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(lx, baseY + 2, 6), ironBars, false);
+                chunk.setBlockState(mutable.set(lx, baseY + 2, 8), ironBars, false);
+            }
+        }
+
+        // Perimeter corridor surrounding the courtyard (lx, lz in 0..2 or 13..15)
+        for (int lx = 0; lx < 16; lx++) {
+            for (int lz = 0; lz < 16; lz++) {
+                if (lx < 3 || lx > 12 || lz < 3 || lz > 12) {
+                    for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
+                        chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                    }
+                    if ((lx + lz) % 6 == 0) {
+                        chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, lz), emergLamp, false);
+                    }
+                }
+            }
+        }
+    }
+
+    private void generateFloorSlab(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor, FloorArchetype archetype,
                                   boolean isStairChunk, boolean isElevatorChunk, BlockState p46, BlockState air) {
         BlockState floorState = switch (archetype) {
             case PURGED -> Blocks.BLACKSTONE.getDefaultState();
@@ -175,10 +287,13 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             default -> p46;
         };
 
+        boolean isStairBottom = (floor % 10 == 0);
+
         for (int lx = 0; lx < 16; lx++) {
             for (int lz = 0; lz < 16; lz++) {
                 // Stair opening only at lx in 2..5, lz in 1..4 (lz 5..6 is solid landing floor!)
-                boolean isStairOpening = isStairChunk && (lx >= 2 && lx <= 5 && lz >= 1 && lz <= 4);
+                // If it's the bottom floor of a 10-floor segment, slab is solid so stairs don't fall through!
+                boolean isStairOpening = isStairChunk && !isStairBottom && (lx >= 2 && lx <= 5 && lz >= 1 && lz <= 4);
                 // Elevator hoistway opening at lx in 11..13, lz == 13 (lx in 11..13, lz in 11..12 is cabin landing platform)
                 boolean isElevatorOpening = isElevatorChunk && (lx >= 11 && lx <= 13 && lz == 13);
 
@@ -202,9 +317,16 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 boolean isCorridor = isCorridorX || isCorridorZ;
 
                 if (isCorridor) {
-                    // Clear corridor air (y = baseY + 1 .. baseY + 5)
+                    // Clear corridor air
                     for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
                         chunk.setBlockState(mutable.set(lx, y, lz), air, false);
+                    }
+
+                    // Cable tray under ceiling
+                    if (isCorridorX && lz % 2 == 0) {
+                        chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, lz), Blocks.CHAIN.getDefaultState(), false);
+                    } else if (isCorridorZ && lx % 2 == 0) {
+                        chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, lz), Blocks.CHAIN.getDefaultState(), false);
                     }
 
                     // Corridor Floor dressing
@@ -229,11 +351,16 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 boolean isWallZ = (lz == 6 || lz == 9);
 
                 if ((isWallX && !isCorridorZ) || (isWallZ && !isCorridorX)) {
-                    // Check doorway locations into apartments
                     boolean isDoor = (isWallX && (lz == 3 || lz == 12)) || (isWallZ && (lx == 3 || lx == 12));
+                    boolean isGarbageChutePos = (isWallX && lz == 5) || (isWallZ && lx == 10);
 
-                    if (isDoor) {
-                        // Place sealed blast door with directional facing
+                    if (isGarbageChutePos) {
+                        // Cast iron garbage chute hatch in corridor alcove
+                        chunk.setBlockState(mutable.set(lx, baseY + 1, lz), ModBlocks.GARBAGE_CHUTE.getDefaultState(), false);
+                        for (int y = baseY + 2; y < baseY + FLOOR_HEIGHT; y++) {
+                            chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
+                        }
+                    } else if (isDoor) {
                         BlockState lowerDoor = isWallX ? (lx == 6 ? doorLE : doorLW) : (lz == 6 ? doorLS : doorLN);
                         BlockState upperDoor = isWallX ? (lx == 6 ? doorUE : doorUW) : (lz == 6 ? doorUS : doorUN);
 
@@ -243,10 +370,15 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                             chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
                         }
                     } else {
-                        // Authentic two-tone wall: lower 2 blocks painted, upper 3 blocks concrete
-                        BlockState lowerWall = (archetype == FloorArchetype.PURGED) ? Blocks.POLISHED_BLACKSTONE.getDefaultState() : painted;
-                        chunk.setBlockState(mutable.set(lx, baseY + 1, lz), lowerWall, false);
-                        chunk.setBlockState(mutable.set(lx, baseY + 2, lz), lowerWall, false);
+                        // Fire cabinet (ПК-1) niche or two-tone wall
+                        boolean isFireCabinet = (isWallX && lz == 2) || (isWallZ && lx == 13);
+                        if (isFireCabinet && floor % 3 == 0) {
+                            chunk.setBlockState(mutable.set(lx, baseY + 2, lz), Blocks.RED_TERRACOTTA.getDefaultState(), false);
+                        } else {
+                            BlockState lowerWall = (archetype == FloorArchetype.PURGED) ? Blocks.POLISHED_BLACKSTONE.getDefaultState() : painted;
+                            chunk.setBlockState(mutable.set(lx, baseY + 1, lz), lowerWall, false);
+                            chunk.setBlockState(mutable.set(lx, baseY + 2, lz), lowerWall, false);
+                        }
                         for (int y = baseY + 3; y < baseY + FLOOR_HEIGHT; y++) {
                             chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
                         }
@@ -267,8 +399,8 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         }
     }
 
-    private void generateStairwell(Chunk chunk, BlockPos.Mutable mutable, int baseY, BlockState p46, BlockState painted,
-                                  BlockState air, BlockState ironBars, BlockState emergLamp) {
+    private void generateSegmentedStairwell(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor, BlockState p46, BlockState painted,
+                                           BlockState air, BlockState ironBars, BlockState emergLamp) {
         // Enclosing walls around stairwell (lx in 1..6, lz in 1..6)
         for (int lx = 1; lx <= 6; lx++) {
             for (int lz = 1; lz <= 6; lz++) {
@@ -298,9 +430,6 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         }
 
         // Two-flight Soviet staircase:
-        // Main landing at lz in 5..6, lx in 2..5 is already solid floor at baseY!
-
-        // Flight 1: Ascends North along lx in 2..3 from baseY to intermediate landing at baseY+3
         BlockState stairsNorth = Blocks.STONE_BRICK_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH);
         BlockState stairsSouth = Blocks.STONE_BRICK_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.SOUTH);
 
@@ -319,22 +448,32 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
+        boolean isSegmentTop = (floor % 10 == 9);
+
         // Flight 2: Ascends South along lx in 4..5 from baseY+3 up to baseY+6
-        // Step 3 at lz=3, y=baseY+4
+        // If it's the top of a 10-floor segment, Flight 2 reaches the top floor landing and terminates!
         chunk.setBlockState(mutable.set(4, baseY + 4, 3), stairsSouth, false);
         chunk.setBlockState(mutable.set(5, baseY + 4, 3), stairsSouth, false);
 
-        // Step 4 at lz=4, y=baseY+5
         chunk.setBlockState(mutable.set(4, baseY + 5, 4), stairsSouth, false);
         chunk.setBlockState(mutable.set(5, baseY + 5, 4), stairsSouth, false);
-        // Landing at lz=5, y=baseY+6 connects seamlessly to the upper floor slab!
 
-        // Safety Railings in the central gap between Flight 1 and Flight 2
+        // Top ceiling solid slab if segment top
+        if (isSegmentTop) {
+            for (int lx = 2; lx <= 5; lx++) {
+                for (int lz = 1; lz <= 5; lz++) {
+                    chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT, lz), p46, false);
+                }
+            }
+        }
+
+        // Railings in central gap
         chunk.setBlockState(mutable.set(3, baseY + 3, 3), ironBars, false);
         chunk.setBlockState(mutable.set(3, baseY + 3, 4), ironBars, false);
         chunk.setBlockState(mutable.set(4, baseY + 3, 2), ironBars, false);
 
-        // Landing illumination
+        // Landing garbage chute & lamp
+        chunk.setBlockState(mutable.set(5, baseY + 1, 5), ModBlocks.GARBAGE_CHUTE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(3, baseY + 5, 2), emergLamp, false);
         chunk.setBlockState(mutable.set(4, baseY + 5, 5), ModBlocks.FLUORESCENT_LAMP.getDefaultState(), false);
     }
@@ -426,7 +565,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
 
     private void generateApartment(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor, long seed,
                                   FloorArchetype archetype, int minX, int maxX, int minZ, int maxZ) {
-        // 1. Clear interior air
+        // Clear interior air
         for (int lx = minX; lx <= maxX; lx++) {
             for (int lz = minZ; lz <= maxZ; lz++) {
                 for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
@@ -435,7 +574,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        int variant = Math.abs((int) (seed % 6));
+        int variant = Math.abs((int) (seed % 12));
 
         switch (archetype) {
             case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, variant, minX, maxX, minZ, maxZ);
@@ -454,56 +593,39 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
 
         switch (variant) {
             case 0 -> {
-                // Classic Soviet Living Room (Зал с ковром, телевизором «Рекорд» и радиоприёмником «Маяк»)
-                // Parquet floor
+                // 1. Classic Soviet Living Room (Зал с ковром, ТВ «Рекорд», радио «Маяк»)
                 for (int lx = minX; lx <= maxX; lx++) {
                     for (int lz = minZ; lz <= maxZ; lz++) {
                         chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.DARK_OAK_PLANKS.getDefaultState(), false);
                     }
                 }
-                // Wall Carpet on back wall
                 BlockState carpet = ModBlocks.WALL_CARPET.getDefaultState().with(WallCarpetBlock.FACING, Direction.SOUTH);
                 chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), carpet, false);
                 chunk.setBlockState(mutable.set(midX + 1, baseY + 2, minZ), carpet, false);
 
-                // Table with TV and Radio
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.BOOKSHELF.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.OLD_TV.getDefaultState().with(OldTvBlock.FACING, Direction.NORTH), false);
                 chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), ModBlocks.RADIO_RECEIVER.getDefaultState().with(RadioReceiverBlock.FACING, Direction.NORTH), false);
-
-                // Radiator under the exterior wall
                 chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), ModBlocks.CAST_IRON_RADIATOR.getDefaultState().with(CastIronRadiatorBlock.FACING, Direction.EAST), false);
-
-                // Bookshelf and sofa
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 2, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.RED_WOOL.getDefaultState(), false);
             }
             case 1 -> {
-                // Soviet Communal Kitchen (Газовая плита, ржавая раковина, запасы концентрата)
-                // Kitchen linoleum / tile floor
+                // 2. Soviet Communal Kitchen (Две газовые плиты, раковина, концентраты)
                 for (int lx = minX; lx <= maxX; lx++) {
                     for (int lz = minZ; lz <= maxZ; lz++) {
                         BlockState tile = ((lx + lz) % 2 == 0) ? Blocks.WHITE_TERRACOTTA.getDefaultState() : Blocks.LIGHT_GRAY_TERRACOTTA.getDefaultState();
                         chunk.setBlockState(mutable.set(lx, baseY, lz), tile, false);
                     }
                 }
-                // Gas stove with exhaust pipe
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.GAS_STOVE.getDefaultState().with(GasStoveBlock.FACING, Direction.SOUTH), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.IRON_BARS.getDefaultState(), false);
-
-                // Rusty enameled sink
                 chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ), ModBlocks.RUSTY_SINK.getDefaultState(), false);
-
-                // Food counters and barrels
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, midZ), Blocks.CRAFTING_TABLE.getDefaultState(), false);
-
-                // Cast Iron radiator
                 chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), ModBlocks.CAST_IRON_RADIATOR.getDefaultState().with(CastIronRadiatorBlock.FACING, Direction.NORTH), false);
             }
             case 2 -> {
-                // Barricaded Survivor Safehouse (Убежище с запасами, колючей проволокой и лежанкой)
+                // 3. Survivor Fortified Bunker (Убежище с ломами, колючей проволокой, запасами)
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), Blocks.HAY_BLOCK.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, midZ + 1), Blocks.HAY_BLOCK.getDefaultState(), false);
@@ -513,26 +635,72 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), Blocks.IRON_BARS.getDefaultState(), false);
             }
             case 3 -> {
-                // Liquidator Decon Post / Arms Stash (Санпропускник)
-                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CAULDRON.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.ANVIL.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CHEST.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(midX, baseY + 3, minZ), ModBlocks.EMERGENCY_LAMP.getDefaultState(), false);
+                // 4. Liquidator Welded Quarantine (Заваренная квартира с пломбой)
+                chunk.setBlockState(mutable.set(midX, baseY, midZ), Blocks.MAGMA_BLOCK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BLACKSTONE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.POLISHED_BLACKSTONE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ), Blocks.IRON_BARS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), Blocks.COPPER_GRATE.getDefaultState(), false);
             }
             case 4 -> {
-                // Workshop / Radio Station (Ремонтный бокс деталей ЖП-11-У)
-                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.RADIO_RECEIVER.getDefaultState().with(RadioReceiverBlock.FACING, Direction.EAST), false);
-                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ), Blocks.STONECUTTER.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, midZ), Blocks.HOPPER.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), Blocks.BARREL.getDefaultState(), false);
+                // 5. Illegal Moonshine Still & Fungi Farm (Самогонный аппарат и грибы)
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CAULDRON.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.BREWING_STAND.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY, minZ), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ + 1), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
             }
             case 5 -> {
-                // Biomass Contaminated / Abandoned room (Прорыв слизи)
-                chunk.setBlockState(mutable.set(midX, baseY, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(midX + 1, baseY, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.BIOMASS.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
+                // 6. Mad Radio Ham Numbers Station (Квартира сумасшедшего радиолюбителя)
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.RADIO_RECEIVER.getDefaultState().with(RadioReceiverBlock.FACING, Direction.EAST), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.LIGHTNING_ROD.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.CHISELED_BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.HOPPER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+            }
+            case 6 -> {
+                // 7. Walled-off Phantom Room (Замурованная силикатным кирпичом комната)
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.STONE_BRICKS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.CHEST.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
+            }
+            case 7 -> {
+                // 8. Creepy Abandoned Creche / Kindergarten (Заброшенный детский садик)
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.IRON_BARS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ), Blocks.WHITE_BED.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CYAN_WOOL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.FLOWER_POT.getDefaultState(), false);
+            }
+            case 8 -> {
+                // 9. Biomass Cult Shrine (Святилище культа Самосбора)
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.RED_CARPET.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.RED_CARPET.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), ModBlocks.EMERGENCY_LAMP.getDefaultState(), false);
+            }
+            case 9 -> {
+                // 10. Electrical Maintenance Plenum (Щитовая)
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.OBSERVER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.ANVIL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.COPPER_BULB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
+            }
+            case 10 -> {
+                // 11. Party Committee Archive (Партком)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    chunk.setBlockState(mutable.set(lx, baseY + 1, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.RED_CARPET.getDefaultState(), false);
+            }
+            case 11 -> {
+                // 12. Looted Abandoned Flat (Разграбленная квартира)
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.OAK_PLANKS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
             }
         }
     }
@@ -541,17 +709,15 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
-        // Heavy industrial support column
+        // Massive concrete support column
         for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
             chunk.setBlockState(mutable.set(midX, y, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
         }
-        // Machine machinery and conveyors
         chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BLAST_FURNACE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(minX, baseY + 1, minZ + 1), Blocks.ANVIL.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.HOPPER.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), ModBlocks.FOOD_DISPENSER.getDefaultState(), false);
         chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.BARREL.getDefaultState(), false);
-        // Overhead hanging chains
         chunk.setBlockState(mutable.set(midX, baseY + 4, minZ), Blocks.CHAIN.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 4, maxZ), Blocks.CHAIN.getDefaultState(), false);
     }
@@ -560,7 +726,6 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
-        // Containment cube with glass and Biomass specimen
         chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.TINTED_GLASS.getDefaultState(), false);
@@ -568,7 +733,6 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chunk.setBlockState(mutable.set(midX, baseY + 1, midZ + 1), Blocks.TINTED_GLASS.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 1, midZ - 1), Blocks.TINTED_GLASS.getDefaultState(), false);
 
-        // Analysis benches
         chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BREWING_STAND.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CAULDRON.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.CHEST.getDefaultState(), false);
@@ -578,13 +742,11 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
-        // Archive bookshelves along walls
         for (int lx = minX; lx <= maxX; lx++) {
             chunk.setBlockState(mutable.set(lx, baseY + 1, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
             chunk.setBlockState(mutable.set(lx, baseY + 2, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
         }
 
-        // Party desk and chair
         chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 1, maxZ), Blocks.CHISELED_BOOKSHELF.getDefaultState(), false);
@@ -595,7 +757,6 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
-        // Murky water pool on floor
         for (int lx = minX; lx <= maxX; lx++) {
             for (int lz = minZ; lz <= maxZ; lz++) {
                 if ((lx + lz) % 2 == 0) {
@@ -604,12 +765,10 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        // Leaking rusty copper pipes overhead
         chunk.setBlockState(mutable.set(midX, baseY + 4, midZ), Blocks.COPPER_GRATE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 4, minZ), Blocks.COPPER_BLOCK.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 4, maxZ), Blocks.COPPER_BLOCK.getDefaultState(), false);
 
-        // Cobwebs and broken valves
         chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.COBWEB.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.CAULDRON.getDefaultState(), false);
     }
@@ -618,7 +777,6 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
-        // Charred basalt and magma residue
         chunk.setBlockState(mutable.set(midX, baseY, midZ), Blocks.MAGMA_BLOCK.getDefaultState(), false);
         chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BASALT.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.POLISHED_BLACKSTONE.getDefaultState(), false);
