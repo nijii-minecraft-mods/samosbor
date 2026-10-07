@@ -14,10 +14,20 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.DoorBlock;
 import net.minecraft.block.StairsBlock;
+import net.minecraft.block.WallSignBlock;
+import net.minecraft.block.entity.BarrelBlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.entity.SignBlockEntity;
+import net.minecraft.block.entity.SignText;
 import net.minecraft.block.enums.DoubleBlockHalf;
+import net.minecraft.loot.LootTable;
+import net.minecraft.loot.LootTables;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.state.property.Properties;
+import net.minecraft.text.Text;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -385,12 +395,29 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                         }
                     } else {
                         boolean isFireCabinet = (isWallX && lz == 2) || (isWallZ && lx == 13);
+                        boolean isNoticeWall = (isWallX && lz == 4) || (isWallZ && lx == 11);
                         if (isFireCabinet && floor % 3 == 0) {
                             chunk.setBlockState(mutable.set(lx, baseY + 2, lz), Blocks.RED_TERRACOTTA.getDefaultState(), false);
+                            chunk.setBlockState(mutable.set(lx, baseY + 1, lz), painted, false);
                         } else {
                             BlockState lowerWall = (archetype == FloorArchetype.PURGED) ? Blocks.POLISHED_BLACKSTONE.getDefaultState() : painted;
                             chunk.setBlockState(mutable.set(lx, baseY + 1, lz), lowerWall, false);
                             chunk.setBlockState(mutable.set(lx, baseY + 2, lz), lowerWall, false);
+
+                            if (isNoticeWall && floor % 2 == 0) {
+                                int signX = isWallX ? (lx == 6 ? 7 : 8) : lx;
+                                int signZ = isWallZ ? (lz == 6 ? 7 : 8) : lz;
+                                Direction facing = isWallX ? (lx == 6 ? Direction.EAST : Direction.WEST) : (lz == 6 ? Direction.SOUTH : Direction.NORTH);
+                                int noticeType = Math.floorMod(floor / 2 + (lx + lz), 6);
+                                switch (noticeType) {
+                                    case 0 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§4ВНИМАНИЕ!", "§0САМОСБОР БЛИЗКО", "§0Задраить двери", "§0по сигналу ГО!", DyeColor.RED);
+                                    case 1 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§1ОБЪЯВЛЕНИЕ", "§0Выдача концентрата", "§008:00 - 10:00", "§0Строго по талонам", DyeColor.BLUE);
+                                    case 2 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§4ОПАСНАЯ ЗОНА", "§0Пломба Очистки", "§0Вход воспрещён!", "§0Штраф: распыл", DyeColor.RED);
+                                    case 3 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§2ГРАФИК ДЕЖУРСТВ", "§0Мытьё пола: кв.1-4", "§0В мусоропровод", "§0не лезть!", DyeColor.GREEN);
+                                    case 4 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§4ВАЛЕРА ВЫХОДИ", "§0МЫ ЗНАЕМ ЧТО ТАМ", "§0НЕ ВЕРЬ ШЁПОТУ", "§0ОНИ НЕ ТВОЯ СЕМЬЯ", DyeColor.PURPLE);
+                                    default -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§8СЛАВА ПАРТИИ!", "§0План по бетону 102%", "§0Берегите ГП-5", "§0Сектор жилой", DyeColor.BLACK);
+                                }
+                            }
                         }
                         for (int y = baseY + 3; y < baseY + FLOOR_HEIGHT; y++) {
                             chunk.setBlockState(mutable.set(lx, y, lz), p46, false);
@@ -568,6 +595,34 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         }
     }
 
+    private void placeChest(Chunk chunk, BlockPos pos, RegistryKey<LootTable> lootTable, long seed) {
+        chunk.setBlockState(pos, Blocks.CHEST.getDefaultState(), false);
+        ChestBlockEntity chest = new ChestBlockEntity(pos.toImmutable(), Blocks.CHEST.getDefaultState());
+        chest.setLootTable(lootTable);
+        chest.setLootTableSeed(seed);
+        chunk.setBlockEntity(chest);
+    }
+
+    private void placeBarrel(Chunk chunk, BlockPos pos, RegistryKey<LootTable> lootTable, long seed) {
+        chunk.setBlockState(pos, Blocks.BARREL.getDefaultState(), false);
+        BarrelBlockEntity barrel = new BarrelBlockEntity(pos.toImmutable(), Blocks.BARREL.getDefaultState());
+        barrel.setLootTable(lootTable);
+        barrel.setLootTableSeed(seed);
+        chunk.setBlockEntity(barrel);
+    }
+
+    private void placeWallNotice(Chunk chunk, BlockPos pos, Direction facing, String l1, String l2, String l3, String l4, DyeColor color) {
+        chunk.setBlockState(pos, Blocks.OAK_WALL_SIGN.getDefaultState().with(WallSignBlock.FACING, facing), false);
+        SignBlockEntity sign = new SignBlockEntity(pos.toImmutable(), Blocks.OAK_WALL_SIGN.getDefaultState());
+        SignText text = new SignText().withColor(color)
+                .withMessage(0, Text.literal(l1))
+                .withMessage(1, Text.literal(l2))
+                .withMessage(2, Text.literal(l3))
+                .withMessage(3, Text.literal(l4));
+        sign.setText(text, true);
+        chunk.setBlockEntity(sign);
+    }
+
     private void generateApartment(Chunk chunk, BlockPos.Mutable mutable, int baseY, int floor, long seed,
                                   FloorArchetype archetype, int minX, int maxX, int minZ, int maxZ, int doorX, int doorZ) {
         for (int lx = minX; lx <= maxX; lx++) {
@@ -581,17 +636,17 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         int variant = Math.abs((int) (seed % 12));
 
         switch (archetype) {
-            case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, variant, minX, maxX, minZ, maxZ, doorX, doorZ);
-            case INDUSTRIAL -> generateIndustrialHall(chunk, mutable, baseY, minX, maxX, minZ, maxZ);
-            case LABORATORY -> generateLaboratory(chunk, mutable, baseY, minX, maxX, minZ, maxZ);
-            case ADMINISTRATION -> generateAdministration(chunk, mutable, baseY, minX, maxX, minZ, maxZ);
-            case FLOODED_TECHNICAL -> generateFloodedTechnical(chunk, mutable, baseY, minX, maxX, minZ, maxZ);
-            case PURGED -> generatePurgedZone(chunk, mutable, baseY, minX, maxX, minZ, maxZ);
+            case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, variant, minX, maxX, minZ, maxZ, doorX, doorZ, seed);
+            case INDUSTRIAL -> generateIndustrialHall(chunk, mutable, baseY, minX, maxX, minZ, maxZ, seed);
+            case LABORATORY -> generateLaboratory(chunk, mutable, baseY, minX, maxX, minZ, maxZ, seed);
+            case ADMINISTRATION -> generateAdministration(chunk, mutable, baseY, minX, maxX, minZ, maxZ, seed);
+            case FLOODED_TECHNICAL -> generateFloodedTechnical(chunk, mutable, baseY, minX, maxX, minZ, maxZ, seed);
+            case PURGED -> generatePurgedZone(chunk, mutable, baseY, minX, maxX, minZ, maxZ, seed);
         }
     }
 
     private void generateResidentialVariant(Chunk chunk, BlockPos.Mutable mutable, int baseY, int variant,
-                                           int minX, int maxX, int minZ, int maxZ, int doorX, int doorZ) {
+                                           int minX, int maxX, int minZ, int maxZ, int doorX, int doorZ, long seed) {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
@@ -611,6 +666,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), ModBlocks.RADIO_RECEIVER.getDefaultState().with(RadioReceiverBlock.FACING, Direction.NORTH), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), ModBlocks.CAST_IRON_RADIATOR.getDefaultState().with(CastIronRadiatorBlock.FACING, Direction.EAST), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.RED_WOOL.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX - 1, baseY + 2, minZ), Direction.SOUTH, "§8«МАЯК-РП»", "§0Частота ГО: 142.5", "§0Слушать тревогу", "§0при сирене!", DyeColor.BLACK);
             }
             case 1 -> {
                 // 2. Soviet Communal Kitchen
@@ -623,7 +679,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.GAS_STOVE.getDefaultState().with(GasStoveBlock.FACING, Direction.SOUTH), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.IRON_BARS.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ), ModBlocks.RUSTY_SINK.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.VILLAGE_BUTCHER_CHEST, seed);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, midZ), Blocks.CRAFTING_TABLE.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), ModBlocks.CAST_IRON_RADIATOR.getDefaultState().with(CastIronRadiatorBlock.FACING, Direction.NORTH), false);
             }
@@ -637,9 +693,10 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), Blocks.HAY_BLOCK.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, midZ + 1), Blocks.HAY_BLOCK.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.ABANDONED_MINESHAFT_CHEST, seed);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), ModBlocks.FOOD_DISPENSER.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(midX, baseY + 1, minZ), Blocks.IRON_BARS.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4УБЕЖИЩЕ №9", "§0Пайка на 3 дня", "§0Фильтры на исходе", "§0Заварено изнутри", DyeColor.RED);
             }
             case 3 -> {
                 // 4. Liquidator Welded Quarantine - Doorway is WELDED SHUT!
@@ -654,6 +711,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY, midZ), Blocks.MAGMA_BLOCK.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BASALT.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.POLISHED_BLACKSTONE.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ОПЕЧАТАНО", "§0Штурм-взвод №3", "§0Биомасса выжжена", "§0Вход воспрещён!", DyeColor.RED);
             }
             case 4 -> {
                 // 5. Illegal Moonshine Still & Fungi Farm
@@ -666,7 +724,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.BREWING_STAND.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY, minZ), ModBlocks.BIOMASS.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.SIMPLE_DUNGEON_CHEST, seed);
             }
             case 5 -> {
                 // 6. Mad Radio Ham Numbers Station
@@ -679,6 +737,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.LIGHTNING_ROD.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.CHISELED_BOOKSHELF.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.HOPPER.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX - 1, baseY + 2, minZ), Direction.SOUTH, "§5НОМЕРНАЯ СТАНЦИЯ", "§0УЗБ-76 «ЖУЖЖАЛКА»", "§04625 кГц", "§0МДЖБ 76 497", DyeColor.PURPLE);
             }
             case 6 -> {
                 // 7. Walled-off Phantom Room - Doorway is BRICKED SHUT!
@@ -686,7 +745,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(doorX, baseY + 2, doorZ), Blocks.STONE_BRICKS.getDefaultState(), false);
 
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.STONE_BRICKS.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.CHEST.getDefaultState(), false);
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.STRONGHOLD_CORRIDOR_CHEST, seed);
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
             }
             case 7 -> {
@@ -700,6 +759,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ), Blocks.WHITE_BED.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CYAN_WOOL.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.FLOWER_POT.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§1ЯСЛИ №12", "§0«СОЛНЫШКО»", "§0Дети эвакуированы", "§0при Самосборе", DyeColor.BLUE);
             }
             case 8 -> {
                 // 9. Biomass Cult Shrine
@@ -713,13 +773,14 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.RED_CARPET.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.RED_CARPET.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), ModBlocks.EMERGENCY_LAMP.getDefaultState(), false);
+                placeWallNotice(chunk, mutable.set(minX, baseY + 2, minZ), Direction.SOUTH, "§4ОНО ЗОВЁТ", "§4СВЯЩЕННАЯ ПЛОТЬ", "§4СЛИЯНИЕ НЕИЗБЕЖНО", "§4СЛАВА САМОСБОРУ", DyeColor.RED);
             }
             case 9 -> {
                 // 10. Electrical Maintenance Plenum
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.OBSERVER.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.ANVIL.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.COPPER_BULB.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.VILLAGE_TOOLSMITH_CHEST, seed);
             }
             case 10 -> {
                 // 11. Party Committee Archive
@@ -734,17 +795,19 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.RED_CARPET.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.STRONGHOLD_LIBRARY_CHEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ПАРТКОМ СЕКТОРА", "§0Приём граждан:", "§0Вт, Чт 14:00-16:00", "§0Талоны не выдаём!", DyeColor.RED);
             }
             case 11 -> {
                 // 12. Looted Abandoned Flat
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.COBWEB.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.OAK_PLANKS.getDefaultState(), false);
-                chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.BARREL.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, minZ), LootTables.VILLAGE_SAVANNA_HOUSE_CHEST, seed);
             }
         }
     }
 
-    private void generateIndustrialHall(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ) {
+    private void generateIndustrialHall(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ, long seed) {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
@@ -755,12 +818,12 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chunk.setBlockState(mutable.set(minX, baseY + 1, minZ + 1), Blocks.ANVIL.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.HOPPER.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), ModBlocks.FOOD_DISPENSER.getDefaultState(), false);
-        chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.BARREL.getDefaultState(), false);
+        placeBarrel(chunk, mutable.set(minX, baseY + 1, maxZ), LootTables.VILLAGE_ARMORER_CHEST, seed);
         chunk.setBlockState(mutable.set(midX, baseY + 4, minZ), Blocks.CHAIN.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 4, maxZ), Blocks.CHAIN.getDefaultState(), false);
     }
 
-    private void generateLaboratory(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ) {
+    private void generateLaboratory(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ, long seed) {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
@@ -773,10 +836,11 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
 
         chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BREWING_STAND.getDefaultState(), false);
         chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CAULDRON.getDefaultState(), false);
-        chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.CHEST.getDefaultState(), false);
+        placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.TRIAL_CHAMBERS_SUPPLY_CHEST, seed);
+        placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§3НИИ «ГИГАСТРОЙ»", "§0Лаб. 4-Б: Биомасса", "§0Вход только в ГП-5", "§0Класс опасности: IV", DyeColor.CYAN);
     }
 
-    private void generateAdministration(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ) {
+    private void generateAdministration(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ, long seed) {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
@@ -788,10 +852,11 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 1, maxZ), Blocks.CHISELED_BOOKSHELF.getDefaultState(), false);
-        chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.BARREL.getDefaultState(), false);
+        placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.STRONGHOLD_LIBRARY_CHEST, seed);
+        placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ПАРТКОМ СЕКТОРА", "§0Приём граждан:", "§0Вт, Чт 14:00-16:00", "§0Талоны не выдаём!", DyeColor.RED);
     }
 
-    private void generateFloodedTechnical(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ) {
+    private void generateFloodedTechnical(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ, long seed) {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
@@ -808,10 +873,11 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chunk.setBlockState(mutable.set(midX, baseY + 4, maxZ), Blocks.COPPER_BLOCK.getDefaultState(), false);
 
         chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.COBWEB.getDefaultState(), false);
-        chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.CAULDRON.getDefaultState(), false);
+        chunk.setBlockState(mutable.set(maxX, baseY + 1, minZ), Blocks.CAULDRON.getDefaultState(), false);
+        placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), LootTables.UNDERWATER_RUIN_BIG_CHEST, seed);
     }
 
-    private void generatePurgedZone(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ) {
+    private void generatePurgedZone(Chunk chunk, BlockPos.Mutable mutable, int baseY, int minX, int maxX, int minZ, int maxZ, long seed) {
         int midX = (minX + maxX) / 2;
         int midZ = (minZ + maxZ) / 2;
 
@@ -820,6 +886,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chunk.setBlockState(mutable.set(maxX, baseY + 1, maxZ), Blocks.POLISHED_BLACKSTONE.getDefaultState(), false);
         chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.COAL_BLOCK.getDefaultState(), false);
         chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), Blocks.IRON_BARS.getDefaultState(), false);
+        placeChest(chunk, mutable.set(midX, baseY + 1, midZ), LootTables.NETHER_BRIDGE_CHEST, seed);
     }
 
     @Override

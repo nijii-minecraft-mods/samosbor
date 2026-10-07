@@ -5,7 +5,9 @@ import com.samosbor.block.ModBlocks;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.DoorBlock;
+import net.minecraft.block.entity.BarrelBlockEntity;
 import net.minecraft.block.enums.DoubleBlockHalf;
+import net.minecraft.loot.LootTables;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
@@ -136,7 +138,12 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
         world.setBlockState(elevatorPos.up(2), lamp, 3);
 
         // Entrance notice board / crate with basic supplies
-        world.setBlockState(start.add(4, 1, 2), Blocks.BARREL.getDefaultState(), 3);
+        BlockPos barrelPos = start.add(4, 1, 2);
+        world.setBlockState(barrelPos, Blocks.BARREL.getDefaultState(), 3);
+        if (world.getBlockEntity(barrelPos) instanceof BarrelBlockEntity barrel) {
+            barrel.setLootTable(LootTables.VILLAGE_PLAINS_CHEST);
+            barrel.setLootTableSeed(random.nextLong());
+        }
         world.setBlockState(start.add(6, 1, 2), ModBlocks.OLD_TV.getDefaultState(), 3);
 
         return true;
