@@ -17,7 +17,12 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class GarbageChuteBlock extends Block implements PolymerBlock {
+    private static final Map<UUID, Long> COOLDOWNS = new ConcurrentHashMap<>();
 
     public GarbageChuteBlock() {
         super(AbstractBlock.Settings.copy(Blocks.HOPPER).strength(3.0f, 6.0f));
@@ -26,8 +31,16 @@ public class GarbageChuteBlock extends Block implements PolymerBlock {
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (!world.isClient) {
+            long now = world.getTime();
+            Long last = COOLDOWNS.get(player.getUuid());
+            if (last != null && (now - last) < 40) { // 2 second cooldown
+                player.sendMessage(Text.literal("§7[Мусоропровод]: Ковш заблокирован, ожидайте завершения сброса..."), true);
+                return ActionResult.SUCCESS;
+            }
+
             ItemStack held = player.getMainHandStack();
             if (!held.isEmpty()) {
+                COOLDOWNS.put(player.getUuid(), now);
                 if (!player.getAbilities().creativeMode) {
                     held.decrement(1);
                 }
@@ -35,7 +48,7 @@ public class GarbageChuteBlock extends Block implements PolymerBlock {
                 world.playSound(null, pos, SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.BLOCKS, 1.2f, 0.6f);
                 world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.BLOCKS, 0.4f, 0.5f);
 
-                // Small chance to find a discarded ration ticket or component in the chute
+                // Small chance to scavenge a discarded ration ticket or component in the chute
                 if (world.random.nextInt(10) == 0) {
                     ItemStack loot = world.random.nextBoolean() ? new ItemStack(ModItems.RATION_TICKET) : new ItemStack(Items.IRON_NUGGET);
                     if (!player.getInventory().insertStack(loot)) {
