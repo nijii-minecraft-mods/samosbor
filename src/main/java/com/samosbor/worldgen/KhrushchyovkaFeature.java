@@ -182,14 +182,11 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
         // Notice Board by Entrance
         BlockPos signPos = start.add(7, 2, 0);
         world.setBlockState(signPos, Blocks.OAK_WALL_SIGN.getDefaultState().with(WallSignBlock.FACING, Direction.NORTH), 3);
-        if (world.getBlockEntity(signPos) instanceof SignBlockEntity sign) {
-            SignText text = new SignText().withColor(DyeColor.BLACK)
-                    .withMessage(0, Text.literal("§0ОБЪЯВЛЕНИЯ"))
-                    .withMessage(1, Text.literal("§01. Травля тараканов"))
-                    .withMessage(2, Text.literal("§02. Сдача макулатуры"))
-                    .withMessage(3, Text.literal("§43. В подвал не лазить!"));
-            sign.setText(text, true);
-        }
+        setSignSafely(world, signPos, new SignText().withColor(DyeColor.BLACK)
+                .withMessage(0, Text.literal("§0ОБЪЯВЛЕНИЯ"))
+                .withMessage(1, Text.literal("§01. Травля тараканов"))
+                .withMessage(2, Text.literal("§02. Сдача макулатуры"))
+                .withMessage(3, Text.literal("§43. В подвал не лазить!")));
 
         // 6. Realistic Protruding Balconies on Upper Floors (Stories 1 to 4)
         for (int story = 1; story <= 4; story++) {
@@ -232,28 +229,22 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
         world.setBlockState(mailboxPos, Blocks.BLUE_TERRACOTTA.getDefaultState(), 3);
         BlockPos mailSignPos = start.add(4, 2, 1);
         world.setBlockState(mailSignPos, Blocks.OAK_WALL_SIGN.getDefaultState().with(WallSignBlock.FACING, Direction.NORTH), 3);
-        if (world.getBlockEntity(mailSignPos) instanceof SignBlockEntity sign) {
-            SignText text = new SignText().withColor(DyeColor.BLUE)
-                    .withMessage(0, Text.literal("§1ПОЧТА"))
-                    .withMessage(1, Text.literal("§0Кв. 1 - 20"))
-                    .withMessage(2, Text.literal("§0Газета «Правда»"))
-                    .withMessage(3, Text.literal("§0Квитанции ЖЭК"));
-            sign.setText(text, true);
-        }
+        setSignSafely(world, mailSignPos, new SignText().withColor(DyeColor.BLUE)
+                .withMessage(0, Text.literal("§1ПОЧТА"))
+                .withMessage(1, Text.literal("§0Кв. 1 - 20"))
+                .withMessage(2, Text.literal("§0Газета «Правда»"))
+                .withMessage(3, Text.literal("§0Квитанции ЖЭК")));
 
         // Electrical Junction Box
         BlockPos fuseboxPos = start.add(8, 2, 2);
         world.setBlockState(fuseboxPos, Blocks.BLAST_FURNACE.getDefaultState(), 3);
         BlockPos fuseSignPos = start.add(8, 2, 1);
         world.setBlockState(fuseSignPos, Blocks.OAK_WALL_SIGN.getDefaultState().with(WallSignBlock.FACING, Direction.NORTH), 3);
-        if (world.getBlockEntity(fuseSignPos) instanceof SignBlockEntity sign) {
-            SignText text = new SignText().withColor(DyeColor.RED)
-                    .withMessage(0, Text.literal("§4ВНИМАНИЕ!"))
-                    .withMessage(1, Text.literal("§0380 ВОЛЬТ"))
-                    .withMessage(2, Text.literal("§0НЕ ВЛЕЗАЙ —"))
-                    .withMessage(3, Text.literal("§4УБЬЁТ!"));
-            sign.setText(text, true);
-        }
+        setSignSafely(world, fuseSignPos, new SignText().withColor(DyeColor.RED)
+                .withMessage(0, Text.literal("§4ВНИМАНИЕ!"))
+                .withMessage(1, Text.literal("§0380 ВОЛЬТ"))
+                .withMessage(2, Text.literal("§0НЕ ВЛЕЗАЙ —"))
+                .withMessage(3, Text.literal("§4УБЬЁТ!")));
 
         // 10. GP-4 Freight Elevator Shaft to Gigakhrushchyovka Middle Stratum
         // Enclosed elevator bay at x=6, z=4..5
@@ -272,14 +263,11 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
         // Elevator station technical sign
         BlockPos liftSignPos = start.add(7, 2, 4);
         world.setBlockState(liftSignPos, Blocks.OAK_WALL_SIGN.getDefaultState().with(WallSignBlock.FACING, Direction.NORTH), 3);
-        if (world.getBlockEntity(liftSignPos) instanceof SignBlockEntity sign) {
-            SignText text = new SignText().withColor(DyeColor.RED)
-                    .withMessage(0, Text.literal("§4ПОДЪЁМНИК ГП-4"))
-                    .withMessage(1, Text.literal("§0Спуск в Гигахрущ"))
-                    .withMessage(2, Text.literal("§0Шахта: Эт. 2-165"))
-                    .withMessage(3, Text.literal("§4ВХОД В СИЗ!"));
-            sign.setText(text, true);
-        }
+        setSignSafely(world, liftSignPos, new SignText().withColor(DyeColor.RED)
+                .withMessage(0, Text.literal("§4ПОДЪЁМНИК ГП-4"))
+                .withMessage(1, Text.literal("§0Спуск в Гигахрущ"))
+                .withMessage(2, Text.literal("§0Шахта: Эт. 2-165"))
+                .withMessage(3, Text.literal("§4ВХОД В СИЗ!")));
 
         // Starter Survival Supply Crate
         BlockPos cratePos = start.add(5, 1, 5);
@@ -318,6 +306,17 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
             // Drying laundry
             world.setBlockState(pos1.up(2), Blocks.CHAIN.getDefaultState(), 3);
             world.setBlockState(pos2.up(2), Blocks.WHITE_CARPET.getDefaultState(), 3);
+        }
+    }
+
+    private void setSignSafely(StructureWorldAccess world, BlockPos pos, SignText text) {
+        if (world.getBlockEntity(pos) instanceof SignBlockEntity sign) {
+            try {
+                sign.setWorld(world.toServerWorld());
+                sign.setText(text, true);
+            } catch (Throwable t) {
+                // Silently ignore during worldgen decoration
+            }
         }
     }
 }
