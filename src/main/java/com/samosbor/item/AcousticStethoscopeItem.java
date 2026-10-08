@@ -102,8 +102,14 @@ public class AcousticStethoscopeItem extends Item implements PolymerItem {
                 player.sendMessage(Text.literal("§a[СТ-4]: За преградой глухая тишина."), true);
                 stack.damage(1, player, LivingEntity.getSlotForHand(context.getHand()));
             }
-            return ActionResult.SUCCESS;
         }
+        if (player instanceof ServerPlayerEntity serverPlayer) {
+            var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "listen_walls"));
+            if (adv != null) {
+                serverPlayer.getAdvancementTracker().grantCriterion(adv, "used_stethoscope");
+            }
+        }
+        return ActionResult.SUCCESS;
     }
 
     @Override

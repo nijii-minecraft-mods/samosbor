@@ -60,6 +60,12 @@ public class RadioReceiverBlock extends Block implements PolymerHeadBlock {
                 world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.BLOCKS, 1.0f, 0.5f);
                 world.playSound(null, pos, SoundEvents.BLOCK_REDSTONE_TORCH_BURNOUT, SoundCategory.BLOCKS, 0.6f, 1.8f);
                 player.sendMessage(Text.literal("§6[ВЭФ-202]: §7Воспроизведение магнитной кассеты через динамик..."), true);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "number_station"));
+                    if (adv != null) {
+                        serverPlayer.getAdvancementTracker().grantCriterion(adv, "interact_radio");
+                    }
+                }
                 held.use(world, player, net.minecraft.util.Hand.MAIN_HAND);
                 return ActionResult.SUCCESS;
             }
@@ -77,6 +83,12 @@ public class RadioReceiverBlock extends Block implements PolymerHeadBlock {
             }
 
             player.sendMessage(Text.literal(BROADCASTS[nextMode]), true);
+            if (player instanceof ServerPlayerEntity serverPlayer && nextMode > 0) {
+                var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "number_station"));
+                if (adv != null) {
+                    serverPlayer.getAdvancementTracker().grantCriterion(adv, "interact_radio");
+                }
+            }
         }
         return ActionResult.SUCCESS;
     }

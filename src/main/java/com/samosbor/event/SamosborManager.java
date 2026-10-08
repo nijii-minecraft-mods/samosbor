@@ -19,6 +19,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 
 import java.util.List;
@@ -139,6 +140,16 @@ public class SamosborManager {
                 broadcastTitle(world, Text.literal("§aОТБОЙ ТРЕВОГИ"), Text.literal("§7Самосбор отступил. Очистное звено ликвидаторов на этаже."), 10, 70, 20);
                 broadcastMessage(world, Text.translatable("samosbor.event.recession"));
 
+                // Award survive_siren advancement to alive players who survived in safe airtight rooms
+                var surviveAdv = world.getServer().getAdvancementLoader().get(Identifier.of("samosbor", "survive_siren"));
+                if (surviveAdv != null) {
+                    for (ServerPlayerEntity player : world.getPlayers()) {
+                        if (player.isAlive() && isPlayerSafe(world, player)) {
+                            player.getAdvancementTracker().grantCriterion(surviveAdv, "survive_siren_cycle");
+                        }
+                    }
+                }
+
                 // Spawn Liquidator purge team in the corridors
                 for (ServerPlayerEntity player : world.getPlayers()) {
                     BlockPos corridorSpawn = player.getBlockPos().add(world.random.nextInt(8) - 4, 0, world.random.nextInt(8) - 4);
@@ -246,47 +257,105 @@ public class SamosborManager {
             }
         }
 
-        // Spawn hostile Mimic entities in corridors with depth scaling
-        if (world.random.nextInt(250) == 0 && !players.isEmpty()) {
+        // Spawn hostile entities in corridors with depth scaling & variety
+        if (world.random.nextInt(180) == 0 && !players.isEmpty()) {
             ServerPlayerEntity targetPlayer = players.get(world.random.nextInt(players.size()));
-            BlockPos spawnPos = targetPlayer.getBlockPos().add(world.random.nextInt(10) - 5, 0, world.random.nextInt(10) - 5);
+            BlockPos spawnPos = targetPlayer.getBlockPos().add(world.random.nextInt(12) - 6, 0, world.random.nextInt(12) - 6);
             if (world.getBlockState(spawnPos).isAir()) {
-                ZombieEntity mimic = EntityType.ZOMBIE.create(world);
-                if (mimic != null) {
-                    mimic.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                int playerFloor = (int) (targetPlayer.getY() / com.samosbor.dimension.GigakhrushchLayout.FLOOR_HEIGHT);
+                int distFromCenter = Math.abs(playerFloor - 85);
+                int mobRoll = world.random.nextInt(100);
 
-                    int playerFloor = (int) (targetPlayer.getY() / com.samosbor.dimension.GigakhrushchLayout.FLOOR_HEIGHT);
-                    int distFromCenter = Math.abs(playerFloor - 85);
+                if (distFromCenter > 45 && mobRoll < 15) {
+                    // 1. APEX MINI-BOSS: Валера / Древний Мимик
+                    ZombieEntity valera = EntityType.ZOMBIE.create(world);
+                    if (valera != null) {
+                        valera.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        valera.setCustomName(Text.literal("§4§lВалера (Древний Мимик)"));
+                        valera.setCustomNameVisible(true);
+                        valera.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
+                        valera.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE));
+                        valera.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.ROKS3_FLAMETHROWER));
+                        valera.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.VALERA_DOGTAG));
+                        valera.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.40f);
+                        valera.setEquipmentDropChance(EquipmentSlot.OFFHAND, 1.0f);
+                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 3600, 2));
+                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 3600, 2));
+                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 3600, 2));
+                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 3600, 0));
 
-                    if (distFromCenter > 45) {
-                        // Elite Deep Foundations / Party Stratum Armored Mimic
-                        mimic.setCustomName(Text.literal("§4Бронированный Мимик Глубин"));
-                        mimic.setCustomNameVisible(true);
-                        mimic.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
-                        mimic.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE));
-                        mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.ROKS3_FLAMETHROWER));
-                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.20f);
-                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 2));
-                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 2400, 2));
-                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 2400, 1));
-                    } else if (distFromCenter > 20) {
-                        // Intermediate Industrial / Research Mimic
-                        mimic.setCustomName(Text.literal("§cМутировавший Мимик Сектора"));
-                        mimic.setCustomNameVisible(true);
-                        mimic.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.IRON_HELMET));
-                        mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
-                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.40f);
-                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
-                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1800, 1));
-                    } else {
-                        // Standard Habitation Mimic
-                        mimic.setCustomName(Text.literal("§dМимик (Порождение Самосбора)"));
-                        mimic.setCustomNameVisible(true);
-                        mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
-                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
-                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1200, 0));
+                        world.spawnEntity(valera);
+                        world.playSound(null, spawnPos, SoundEvents.ENTITY_WARDEN_ROAR, SoundCategory.HOSTILE, 1.5f, 0.6f);
+                        broadcastMessage(world, Text.literal("§4§l[!] ИЗ ВЕНТШАХТЫ ВЫВАЛИЛСЯ ВАЛЕРА! СТАЛЬНЫЕ КОГТИ СКРЕБУТ ПО БЕТОНУ!"));
                     }
-                    world.spawnEntity(mimic);
+                } else if (mobRoll < 35) {
+                    // 2. Сектант Великой Биомассы (Cultist)
+                    ZombieEntity cultist = EntityType.ZOMBIE.create(world);
+                    if (cultist != null) {
+                        cultist.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        cultist.setCustomName(Text.literal("§5Сектант Великой Биомассы"));
+                        cultist.setCustomNameVisible(true);
+                        cultist.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.WITHER_SKELETON_SKULL));
+                        cultist.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.RITUAL_SICKLE));
+                        cultist.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.BIOMASS_GRIMOIRE));
+                        cultist.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.25f);
+                        cultist.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
+                        cultist.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1800, 0));
+
+                        world.spawnEntity(cultist);
+                        if (world.random.nextBoolean()) {
+                            broadcastMessage(world, Text.literal("§5[Сектант Биомассы]: §d«Святая Мякоть, раствори наш страх! Впусти Туман!»"));
+                        }
+                    }
+                } else if (mobRoll < 60) {
+                    // 3. Обезумевший Ликвидатор (Rogue Liquidator)
+                    ZombieEntity rogue = EntityType.ZOMBIE.create(world);
+                    if (rogue != null) {
+                        rogue.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        rogue.setCustomName(Text.literal("§cОбезумевший Ликвидатор"));
+                        rogue.setCustomNameVisible(true);
+                        rogue.equipStack(EquipmentSlot.HEAD, new ItemStack(ModItems.GAS_MASK));
+                        rogue.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.IRON_CHESTPLATE));
+                        rogue.equipStack(EquipmentSlot.MAINHAND, new ItemStack(world.random.nextBoolean() ? ModItems.FLAMETHROWER : ModItems.JP11_CARBINE));
+                        rogue.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
+                        rogue.setEquipmentDropChance(EquipmentSlot.HEAD, 0.30f);
+                        rogue.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
+
+                        world.spawnEntity(rogue);
+                        if (world.random.nextBoolean()) {
+                            broadcastMessage(world, Text.literal("§6[Обезумевший Ликвидатор]: §c«ОНИ В СТЕНАХ! ВЫЖЕЧЬ ВСЁ ДО АРМАТУРЫ! ОГОНЬ!»"));
+                        }
+                    }
+                } else if (mobRoll < 75) {
+                    // 4. Мясная Пиявка (Biomass Leech)
+                    net.minecraft.entity.mob.EndermiteEntity leech = EntityType.ENDERMITE.create(world);
+                    if (leech != null) {
+                        leech.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        leech.setCustomName(Text.literal("§4Мясная Пиявка Вентиляции"));
+                        leech.setCustomNameVisible(true);
+                        leech.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 2));
+                        world.spawnEntity(leech);
+                    }
+                } else {
+                    // 5. Standard or Mutated Mimic
+                    ZombieEntity mimic = EntityType.ZOMBIE.create(world);
+                    if (mimic != null) {
+                        mimic.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        if (distFromCenter > 20) {
+                            mimic.setCustomName(Text.literal("§cМутировавший Мимик Сектора"));
+                            mimic.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.IRON_HELMET));
+                            mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.HEAVY_CROWBAR));
+                            mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
+                            mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1800, 1));
+                        } else {
+                            mimic.setCustomName(Text.literal("§dМимик (Порождение Самосбора)"));
+                            mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
+                            mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1200, 0));
+                        }
+                        mimic.setCustomNameVisible(true);
+                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
+                        world.spawnEntity(mimic);
+                    }
                 }
             }
         }
@@ -317,6 +386,14 @@ public class SamosborManager {
         ItemStack chest = player.getEquippedStack(EquipmentSlot.CHEST);
         if (chest.isOf(ModItems.L1M_SUIT)) {
             return true;
+        }
+
+        // 1.1 Cult Totem (Tendon Amulet) in offhand protection
+        ItemStack offhand = player.getEquippedStack(EquipmentSlot.OFFHAND);
+        if (offhand.isOf(ModItems.CULT_TOTEM)) {
+            if (com.samosbor.item.CultTotemItem.tryProtectFromSamosbor(player, offhand, world)) {
+                return true;
+            }
         }
 
         // 2. Sealed room check via BFS flood-fill

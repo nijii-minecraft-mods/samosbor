@@ -70,6 +70,7 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
                     world.playSound(null, pos, SoundEvents.BLOCK_IRON_DOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.7f);
                     world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 0.6f);
                     player.sendMessage(Text.literal("§eГермозатвор плотно задраен вентилем."), true);
+                    awardSealAdvancement(player);
                     return ActionResult.SUCCESS;
                 }
 
@@ -84,6 +85,7 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
                     world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.8f, 0.6f);
                     world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_CLOSE, SoundCategory.BLOCKS, 1.0f, 0.5f);
                     player.sendMessage(Text.literal("§eГермозатвор заблокирован вентилем (герметично)."), true);
+                    awardSealAdvancement(player);
                 } else {
                     world.playSound(null, pos, SoundEvents.BLOCK_IRON_TRAPDOOR_OPEN, SoundCategory.BLOCKS, 1.0f, 0.8f);
                     player.sendMessage(Text.literal("§7Вентиль разблокирован."), true);
@@ -133,5 +135,14 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
             return !state.get(OPEN) && (state.get(SEALED) || state.get(WELDED));
         }
         return false;
+    }
+
+    private void awardSealAdvancement(PlayerEntity player) {
+        if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+            var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "seal_hermetic_door"));
+            if (adv != null) {
+                serverPlayer.getAdvancementTracker().grantCriterion(adv, "seal_door");
+            }
+        }
     }
 }

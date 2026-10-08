@@ -1,0 +1,45 @@
+{
+  "parent": "samosbor:root",
+  "display": {
+    "icon": {
+      "id": "samosbor:flamethrower"
+    },
+    "title": {
+      "translate": "advancements.samosbor.cleanse_biomass.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.cleanse_biomass.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "obtain_flamethrower": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:flamethrower"
+          }
+        ]
+      }
+    },
+    "obtain_roks3": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:roks3_flamethrower"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "obtain_flamethrower",
+      "obtain_roks3"
+    ]
+  ]
+}

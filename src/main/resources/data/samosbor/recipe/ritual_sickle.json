@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "minecraft:bone"
+    },
+    "S": {
+      "item": "samosbor:biomass"
+    },
+    "T": {
+      "item": "samosbor:blue_tape"
+    }
+  },
+  "pattern": [
+    " BB",
+    " SB",
+    "T  "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:ritual_sickle"
+  }
+}

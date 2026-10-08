@@ -1,0 +1,32 @@
+{
+  "parent": "samosbor:number_station",
+  "display": {
+    "icon": {
+      "id": "samosbor:acoustic_stethoscope"
+    },
+    "title": {
+      "translate": "advancements.samosbor.listen_walls.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.listen_walls.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "used_stethoscope": {
+      "trigger": "minecraft:item_durability_changed",
+      "conditions": {
+        "item": {
+          "items": "samosbor:acoustic_stethoscope"
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "used_stethoscope"
+    ]
+  ]
+}

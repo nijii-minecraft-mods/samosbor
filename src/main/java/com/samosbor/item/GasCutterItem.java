@@ -78,6 +78,12 @@ public class GasCutterItem extends Item implements PolymerItem {
                 if (player != null) {
                     player.sendMessage(Text.literal("§6[Газовый резак РГ-3]: Швы заварены! Израсходован 1 баллон АЦ-5."), true);
                     stack.damage(1, player, LivingEntity.getSlotForHand(context.getHand()));
+                    if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                        var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "weld_hermetic_door"));
+                        if (adv != null) {
+                            serverPlayer.getAdvancementTracker().grantCriterion(adv, "weld_door");
+                        }
+                    }
                 }
                 return ActionResult.SUCCESS;
             } else {

@@ -1,0 +1,96 @@
+{
+  "parent": "samosbor:cleanse_biomass",
+  "display": {
+    "icon": {
+      "id": "samosbor:biomass"
+    },
+    "title": {
+      "translate": "advancements.samosbor.cult_shrine.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.cult_shrine.description"
+    },
+    "frame": "goal",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "discover_nylium_shrine": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "dimension": "samosbor:gigakhrushchyovka",
+                "block": {
+                  "blocks": "minecraft:crimson_nylium"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "discover_biomass_shrine": {
+      "trigger": "minecraft:location",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "location": {
+                "dimension": "samosbor:gigakhrushchyovka",
+                "block": {
+                  "blocks": "samosbor:biomass"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "obtain_cult_relic": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:cult_totem"
+          }
+        ]
+      }
+    },
+    "obtain_grimoire": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:biomass_grimoire"
+          }
+        ]
+      }
+    },
+    "obtain_sickle": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:ritual_sickle"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "discover_nylium_shrine",
+      "discover_biomass_shrine",
+      "obtain_cult_relic",
+      "obtain_grimoire",
+      "obtain_sickle"
+    ]
+  ]
+}

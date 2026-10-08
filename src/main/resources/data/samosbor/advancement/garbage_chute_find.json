@@ -1,0 +1,50 @@
+{
+  "parent": "samosbor:root",
+  "display": {
+    "icon": {
+      "id": "samosbor:garbage_chute"
+    },
+    "title": {
+      "translate": "advancements.samosbor.garbage_chute_find.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.garbage_chute_find.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "used_chute": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": "samosbor:garbage_chute"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "found_ticket": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:ration_ticket"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "used_chute",
+      "found_ticket"
+    ]
+  ]
+}

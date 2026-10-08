@@ -1,0 +1,32 @@
+{
+  "parent": "samosbor:root",
+  "display": {
+    "icon": {
+      "id": "samosbor:blue_tape"
+    },
+    "title": {
+      "translate": "advancements.samosbor.repair_blue_tape.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.repair_blue_tape.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "used_blue_tape": {
+      "trigger": "minecraft:item_durability_changed",
+      "conditions": {
+        "item": {
+          "items": "samosbor:blue_tape"
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "used_blue_tape"
+    ]
+  ]
+}

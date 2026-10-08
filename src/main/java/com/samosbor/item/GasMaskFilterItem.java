@@ -39,6 +39,12 @@ public class GasMaskFilterItem extends Item implements PolymerItem {
                     }
                     world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ITEM_ARMOR_EQUIP_CHAIN.value(), SoundCategory.PLAYERS, 1.0f, 1.0f);
                     user.sendMessage(Text.literal("§a[Фильтр ГП-5К]: Фильтрующая коробка заменена (+150 прочности)."), true);
+                    if (user instanceof ServerPlayerEntity serverPlayer) {
+                        var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "replace_filter"));
+                        if (adv != null) {
+                            serverPlayer.getAdvancementTracker().grantCriterion(adv, "has_mask_and_filter");
+                        }
+                    }
                     return TypedActionResult.success(stack);
                 } else {
                     user.sendMessage(Text.literal("§7[Фильтр]: Противогаз полностью исправен."), true);

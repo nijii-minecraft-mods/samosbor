@@ -1,0 +1,39 @@
+{
+  "parent": "samosbor:root",
+  "display": {
+    "icon": {
+      "id": "samosbor:hermetic_door"
+    },
+    "title": {
+      "translate": "advancements.samosbor.seal_hermetic_door.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.seal_hermetic_door.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "seal_door": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": "samosbor:hermetic_door"
+              }
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "seal_door"
+    ]
+  ]
+}

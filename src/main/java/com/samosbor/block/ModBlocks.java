@@ -41,6 +41,9 @@ public class ModBlocks {
     public static final Block ELEVATOR_DOOR = register("elevator_door", new ElevatorDoorBlock(), Items.COPPER_DOOR);
     public static final Block ELEVATOR_PANEL = register("elevator_panel", new ElevatorPanelBlock(), Items.OBSERVER);
 
+    // Occult & Cultist blocks
+    public static final Block CULT_ALTAR = registerHead("cult_altar", new CultAltarBlock());
+
     private static Block register(String name, Block block, Item vanillaItem) {
         Identifier id = Identifier.of(MOD_ID, name);
         Registry.register(Registries.BLOCK, id, block);

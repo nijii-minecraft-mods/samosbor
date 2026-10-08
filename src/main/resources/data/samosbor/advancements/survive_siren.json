@@ -1,0 +1,27 @@
+{
+  "parent": "samosbor:weld_hermetic_door",
+  "display": {
+    "icon": {
+      "id": "samosbor:emergency_siren"
+    },
+    "title": {
+      "translate": "advancements.samosbor.survive_siren.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.survive_siren.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "survive_siren_cycle": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "survive_siren_cycle"
+    ]
+  ]
+}

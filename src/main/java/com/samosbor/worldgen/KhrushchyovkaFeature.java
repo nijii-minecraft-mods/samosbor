@@ -276,7 +276,7 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
             SignText text = new SignText().withColor(DyeColor.RED)
                     .withMessage(0, Text.literal("§4ПОДЪЁМНИК ГП-4"))
                     .withMessage(1, Text.literal("§0Спуск в Гигахрущ"))
-                    .withMessage(2, Text.literal("§0Отметка -510м (Эт.85)"))
+                    .withMessage(2, Text.literal("§0Шахта: Эт. 2-165"))
                     .withMessage(3, Text.literal("§4ВХОД В СИЗ!"));
             sign.setText(text, true);
         }

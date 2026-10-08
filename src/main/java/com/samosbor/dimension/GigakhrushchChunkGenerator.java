@@ -978,7 +978,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        int variant = Math.abs((int) (seed % 30));
+        int variant = Math.abs((int) (seed % 34));
 
         switch (archetype) {
             case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, floor, variant, minX, maxX, minZ, maxZ, doorX, doorZ, seed);
@@ -1435,7 +1435,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.CIVIL_DEFENSE_DEPOT), seed);
                 placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§2ДНЕВНИК №4", "§0Дверь заложили...", "§0Воздух кончается", "§0Партком, прощай.", DyeColor.GREEN);
             }
-            default -> {
+            case 29 -> {
                 // 30. Thermite Purge Crater (Термитный кратер зачистки)
                 for (int lx = minX; lx <= maxX; lx++) {
                     for (int lz = minZ; lz <= maxZ; lz++) {
@@ -1449,6 +1449,117 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.ANVIL.getDefaultState(), false);
                 placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.LIQUIDATOR_CACHE), seed);
                 placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4СЕКТОР ВЫЖЖЕН", "§0Огнесмесь РОКС-3", "§0Очаг уничтожен", "§4Фон в норме", DyeColor.RED);
+            }
+            case 30 -> {
+                // 31. Soviet School / Civil Defense Classroom (Советский класс ГО и НВП)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.OAK_PLANKS.getDefaultState(), false);
+                    }
+                }
+                // Chalkboard on front wall with glowing chemistry formulas
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 2, minZ), Blocks.DARK_PRISMARINE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), Blocks.DARK_PRISMARINE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 2, minZ), Blocks.DARK_PRISMARINE.getDefaultState(), false);
+
+                // Teacher's podium and lectern
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ + 1), Blocks.LECTERN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, minZ + 1), Blocks.SMOOTH_STONE_SLAB.getDefaultState(), false);
+
+                // Desks in 2 rows
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, midZ), Blocks.DARK_OAK_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, midZ - 1), Blocks.DARK_OAK_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, midZ), Blocks.DARK_OAK_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, midZ - 1), Blocks.DARK_OAK_SLAB.getDefaultState(), false);
+
+                // Bookshelf and first aid cabinet
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, maxZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX, baseY + 2, minZ + 1), ModBlocks.MEDKIT_BOX.getDefaultState().with(MedkitBoxBlock.FACING, Direction.WEST), false);
+
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), ModLootTables.CIVIL_DEFENSE_DEPOT, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 3, minZ), Direction.SOUTH, "§fНОРМАТИВ ГО №1", "§aНадевание ГП-5: 7с", "§0При опоздании —", "§4РАСПЫЛ В СМЕСИ", DyeColor.YELLOW);
+            }
+            case 31 -> {
+                // 32. Soviet Assembly Hall / Auditorium (Актовый зал)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SMOOTH_STONE.getDefaultState(), false);
+                    }
+                }
+                // Raised stage with velvet curtain and speaker's podium
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 1, minZ), Blocks.RED_WOOL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, minZ), Blocks.OAK_SLAB.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, minZ), Blocks.RED_WOOL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, minZ), Blocks.LECTERN.getDefaultState(), false);
+
+                // Rows of audience cinema seats
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, midZ), Blocks.CRIMSON_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CRIMSON_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, midZ), Blocks.CRIMSON_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, maxZ - 1), Blocks.CRIMSON_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, maxZ - 1), Blocks.CRIMSON_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, maxZ - 1), Blocks.CRIMSON_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.NORTH), false);
+
+                // Projection booth at rear wall
+                chunk.setBlockState(mutable.set(midX, baseY + 2, maxZ), Blocks.DISPENSER.getDefaultState(), false);
+
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), ModLootTables.PARTY_NOMENKLATURA, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 3, minZ), Direction.SOUTH, "§6СЛАВА ТРУДУ!", "§eПЛАН — ЗАКОН!", "§eВЫПОЛНЕНИЕ — ЧЕСТЬ!", "§4ПАРТКОМ ЖЭК", DyeColor.RED);
+            }
+            case 32 -> {
+                // 33. Gymnasium / Sports Hall (Спортивный зал)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.STRIPPED_BIRCH_WOOD.getDefaultState(), false);
+                    }
+                }
+                // Wall climbing bars (шведская стенка) along minX
+                chunk.setBlockState(mutable.set(minX, baseY + 1, midZ - 1), Blocks.LADDER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, midZ - 1), Blocks.LADDER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), Blocks.LADDER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, midZ), Blocks.LADDER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, midZ + 1), Blocks.LADDER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, midZ + 1), Blocks.LADDER.getDefaultState(), false);
+
+                // Gymnastic mats on the floor
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.BLUE_WOOL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.CYAN_WOOL.getDefaultState(), false);
+
+                // Hanging chains
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), ModLootTables.CIVIL_DEFENSE_DEPOT, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§1СПОРТЗАЛ ГО", "§0Нормы ГТО Сектора", "§0Бег в ОЗК и ГП-5", "§2Отсек 12", DyeColor.BLUE);
+            }
+            default -> {
+                // 34. Biomass Cult Sanctum / Heretical Chapel (Оккультное святилище Культа Биомассы)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_BLACKSTONE.getDefaultState(), false);
+                    }
+                }
+                // Central Sacrificial Altar
+                chunk.setBlockState(mutable.set(midX, baseY, midZ), Blocks.CRYING_OBSIDIAN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.CULT_ALTAR.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
+
+                // Biomass tendrils and blood carpets
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 1, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ + 1), Blocks.RED_CARPET.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ - 1), Blocks.RED_CARPET.getDefaultState(), false);
+
+                // Pews and dark skulls
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, maxZ - 1), Blocks.WITHER_SKELETON_SKULL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, maxZ - 1), Blocks.CANDLE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ + 1), Blocks.POLISHED_BLACKSTONE_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.SOUTH), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, minZ + 1), Blocks.POLISHED_BLACKSTONE_STAIRS.getDefaultState().with(StairsBlock.FACING, Direction.SOUTH), false);
+
+                // Occult mimic nest loot cache
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), ModLootTables.MIMIC_NEST, seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ПЛОТЬ ЕДИНА", "§4С БЕТОНОМ", "§5СВЯТАЯ МЯКОТЬ", "§0Слава Самосбору", DyeColor.RED);
             }
         }
     }

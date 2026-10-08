@@ -54,6 +54,13 @@ public class MushroomMoonshineItem extends Item implements PolymerItem {
 
             world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ENTITY_GENERIC_DRINK, SoundCategory.PLAYERS, 1.0f, 1.0f);
             world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 0.8f, 1.0f);
+
+            if (user instanceof ServerPlayerEntity serverPlayer) {
+                var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "drink_moonshine"));
+                if (adv != null) {
+                    serverPlayer.getAdvancementTracker().grantCriterion(adv, "drank_moonshine");
+                }
+            }
         }
 
         if (user instanceof PlayerEntity player && !player.getAbilities().creativeMode) {

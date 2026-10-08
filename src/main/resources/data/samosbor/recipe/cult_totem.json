@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "B": {
+      "item": "samosbor:blue_tape"
+    },
+    "T": {
+      "item": "minecraft:string"
+    },
+    "G": {
+      "item": "samosbor:gas_mask_filter"
+    },
+    "S": {
+      "item": "samosbor:biomass"
+    }
+  },
+  "pattern": [
+    " B ",
+    "TGT",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:cult_totem"
+  }
+}

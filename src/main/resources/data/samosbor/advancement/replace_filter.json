@@ -1,0 +1,47 @@
+{
+  "parent": "samosbor:seal_hermetic_door",
+  "display": {
+    "icon": {
+      "id": "samosbor:gas_mask_filter"
+    },
+    "title": {
+      "translate": "advancements.samosbor.replace_filter.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.replace_filter.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "has_mask_and_filter": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "player": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "equipment": {
+                "head": {
+                  "items": "samosbor:gas_mask"
+                }
+              }
+            }
+          }
+        ],
+        "items": [
+          {
+            "items": "samosbor:gas_mask_filter"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_mask_and_filter"
+    ]
+  ]
+}

@@ -49,6 +49,13 @@ public class ModItems {
     public static final Item PARTY_DOSSIER = register("party_dossier", new PartyDossierItem());
     public static final Item CASSETTE_TAPE = register("cassette_tape", new CassetteTapeItem());
 
+    // Occult relics, cultist weapons & Valera boss drops
+    public static final Item BIOMASS_GRIMOIRE = register("biomass_grimoire", new BiomassGrimoireItem());
+    public static final Item RITUAL_SICKLE = register("ritual_sickle", new RitualSickleItem());
+    public static final Item CULT_TOTEM = register("cult_totem", new CultTotemItem());
+    public static final Item BIOMASS_HEART = register("biomass_heart", new BiomassHeartItem());
+    public static final Item VALERA_DOGTAG = register("valera_dogtag", new ValeraDogTagItem());
+
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(MOD_ID, name), item);
     }

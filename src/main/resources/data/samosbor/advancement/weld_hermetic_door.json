@@ -1,0 +1,45 @@
+{
+  "parent": "samosbor:seal_hermetic_door",
+  "display": {
+    "icon": {
+      "id": "samosbor:gas_cutter"
+    },
+    "title": {
+      "translate": "advancements.samosbor.weld_hermetic_door.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.weld_hermetic_door.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "weld_door": {
+      "trigger": "minecraft:item_used_on_block",
+      "conditions": {
+        "location": [
+          {
+            "condition": "minecraft:location_check",
+            "predicate": {
+              "block": {
+                "blocks": "samosbor:hermetic_door"
+              }
+            }
+          },
+          {
+            "condition": "minecraft:match_tool",
+            "predicate": {
+              "items": "samosbor:gas_cutter"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "weld_door"
+    ]
+  ]
+}

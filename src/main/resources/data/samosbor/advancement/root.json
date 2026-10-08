@@ -1,0 +1,31 @@
+{
+  "display": {
+    "icon": {
+      "id": "samosbor:p46_panel"
+    },
+    "title": {
+      "translate": "advancements.samosbor.root.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.root.description"
+    },
+    "background": "minecraft:textures/block/chiseled_stone_bricks.png",
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "entered_gigakhrushch": {
+      "trigger": "minecraft:changed_dimension",
+      "conditions": {
+        "to": "samosbor:gigakhrushchyovka"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "entered_gigakhrushch"
+    ]
+  ]
+}

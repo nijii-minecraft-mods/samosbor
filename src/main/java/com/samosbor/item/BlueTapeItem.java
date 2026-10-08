@@ -49,6 +49,12 @@ public class BlueTapeItem extends Item implements PolymerItem {
                 world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BLOCK_WOOL_PLACE, SoundCategory.PLAYERS, 0.9f, 0.8f);
 
                 user.sendMessage(Text.literal("§9[Синяя изолента]: Предмет в левой руке обмотан (+100 прочности)!"), true);
+                if (user instanceof ServerPlayerEntity serverPlayer) {
+                    var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "repair_blue_tape"));
+                    if (adv != null) {
+                        serverPlayer.getAdvancementTracker().grantCriterion(adv, "used_blue_tape");
+                    }
+                }
                 return TypedActionResult.success(tapeStack);
             } else {
                 user.sendMessage(Text.literal("§7[Изолента]: Возьмите повреждённый предмет во вторую руку."), true);

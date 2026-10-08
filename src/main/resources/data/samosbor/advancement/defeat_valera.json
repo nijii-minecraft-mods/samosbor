@@ -1,0 +1,91 @@
+{
+  "parent": "samosbor:cult_shrine",
+  "display": {
+    "icon": {
+      "id": "samosbor:roks3_flamethrower"
+    },
+    "title": {
+      "translate": "advancements.samosbor.defeat_valera.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.defeat_valera.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "defeat_armored_mimic": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "minecraft:zombie",
+              "location": {
+                "dimension": "samosbor:gigakhrushchyovka"
+              },
+              "equipment": {
+                "head": {
+                  "items": "minecraft:netherite_helmet"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "defeat_flamethrower_mimic": {
+      "trigger": "minecraft:player_killed_entity",
+      "conditions": {
+        "entity": [
+          {
+            "condition": "minecraft:entity_properties",
+            "entity": "this",
+            "predicate": {
+              "type": "minecraft:zombie",
+              "location": {
+                "dimension": "samosbor:gigakhrushchyovka"
+              },
+              "equipment": {
+                "mainhand": {
+                  "items": "samosbor:roks3_flamethrower"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "obtain_valera_tag": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:valera_dogtag"
+          }
+        ]
+      }
+    },
+    "obtain_biomass_heart": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": "samosbor:biomass_heart"
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "defeat_armored_mimic",
+      "defeat_flamethrower_mimic",
+      "obtain_valera_tag",
+      "obtain_biomass_heart"
+    ]
+  ]
+}

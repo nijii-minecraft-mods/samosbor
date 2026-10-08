@@ -1,0 +1,32 @@
+{
+  "parent": "samosbor:cook_borscht",
+  "display": {
+    "icon": {
+      "id": "samosbor:mushroom_moonshine"
+    },
+    "title": {
+      "translate": "advancements.samosbor.drink_moonshine.title"
+    },
+    "description": {
+      "translate": "advancements.samosbor.drink_moonshine.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "drank_moonshine": {
+      "trigger": "minecraft:consume_item",
+      "conditions": {
+        "item": {
+          "items": "samosbor:mushroom_moonshine"
+        }
+      }
+    }
+  },
+  "requirements": [
+    [
+      "drank_moonshine"
+    ]
+  ]
+}

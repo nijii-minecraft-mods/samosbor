@@ -48,6 +48,13 @@ public class GarbageChuteBlock extends Block implements PolymerBlock {
                 world.playSound(null, pos, SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.BLOCKS, 1.2f, 0.6f);
                 world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.BLOCKS, 0.4f, 0.5f);
 
+                if (player instanceof net.minecraft.server.network.ServerPlayerEntity serverPlayer) {
+                    var adv = serverPlayer.server.getAdvancementLoader().get(net.minecraft.util.Identifier.of("samosbor", "garbage_chute_find"));
+                    if (adv != null) {
+                        serverPlayer.getAdvancementTracker().grantCriterion(adv, "used_chute");
+                    }
+                }
+
                 // Small chance to scavenge a discarded ration ticket or component in the chute
                 if (world.random.nextInt(10) == 0) {
                     ItemStack loot = world.random.nextBoolean() ? new ItemStack(ModItems.RATION_TICKET) : new ItemStack(Items.IRON_NUGGET);
