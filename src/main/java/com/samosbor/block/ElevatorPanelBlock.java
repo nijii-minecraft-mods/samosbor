@@ -130,6 +130,6 @@ public class ElevatorPanelBlock extends Block implements PolymerBlock {
 
     @Override
     public BlockState getPolymerBlockState(BlockState state) {
-        return Blocks.OBSERVER.getDefaultState().with(FACING, state.get(FACING));
+        return Blocks.OBSERVER.getDefaultState().with(net.minecraft.state.property.Properties.FACING, state.get(FACING));
     }
 }
