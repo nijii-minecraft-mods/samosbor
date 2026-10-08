@@ -72,9 +72,11 @@ public class CultAltarBlock extends Block implements PolymerHeadBlock {
             ItemStack offhand = player.getOffHandStack();
             if (!held.isEmpty() && !offhand.isEmpty() && offhand.getItem() instanceof OccultTomeItem tome) {
                 OccultTomeItem.TomeType tomeType = tome.getTomeType();
+                int tomeLevel = tome.getLevel(offhand);
+                String enchantId = tome.getId(offhand);
 
                 if (tomeType.isVanillaEnchantment()) {
-                    RegistryKey<Enchantment> enchKey = switch (tomeType.id) {
+                    RegistryKey<Enchantment> enchKey = switch (enchantId) {
                         case "sharpness" -> Enchantments.SHARPNESS;
                         case "looting" -> Enchantments.LOOTING;
                         case "efficiency" -> Enchantments.EFFICIENCY;
@@ -87,21 +89,30 @@ public class CultAltarBlock extends Block implements PolymerHeadBlock {
                         net.minecraft.registry.Registry<Enchantment> enchRegistry = serverWorld.getRegistryManager().get(RegistryKeys.ENCHANTMENT);
                         var enchEntry = enchRegistry.getEntry(enchKey).orElse(null);
                         if (enchEntry != null) {
-                            held.addEnchantment(enchEntry, tomeType.level);
+                            held.addEnchantment(enchEntry, tomeLevel);
+
+                            // Also append custom Soviet Party Directive lore line
+                            net.minecraft.component.type.LoreComponent existingLore = held.getOrDefault(net.minecraft.component.DataComponentTypes.LORE, net.minecraft.component.type.LoreComponent.DEFAULT);
+                            java.util.List<Text> loreList = new java.util.ArrayList<>(existingLore.lines());
+                            loreList.removeIf(line -> line.getString().contains(tomeType.title));
+                            loreList.add(Text.literal("§4§l" + tomeType.title + " " + RomanNumeralUtil.toRoman(tomeLevel)));
+                            held.set(net.minecraft.component.DataComponentTypes.LORE, new net.minecraft.component.type.LoreComponent(loreList));
+                            held.set(net.minecraft.component.DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true);
+
                             offhand.decrement(1);
                             player.damage(serverWorld.getDamageSources().magic(), 4.0f);
 
-                        serverWorld.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1.2f, 0.7f);
-                        serverWorld.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS, 1.5f, 0.8f);
-                        serverWorld.spawnParticles(ParticleTypes.SCULK_SOUL, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 25, 0.3, 0.4, 0.3, 0.05);
+                            serverWorld.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1.2f, 0.7f);
+                            serverWorld.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS, 1.5f, 0.8f);
+                            serverWorld.spawnParticles(ParticleTypes.SCULK_SOUL, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 25, 0.3, 0.4, 0.3, 0.05);
 
-                        player.sendMessage(Text.literal(String.format("§4[Партийный Ритуал]: §cДиректива Парткома впечатана в снаряжение! Уровень: %s", RomanNumeralUtil.toRoman(tomeType.level))), true);
-                        return ActionResult.SUCCESS;
+                            player.sendMessage(Text.literal(String.format("§4[Партийный Ритуал]: §cДиректива Парткома «%s %s» впечатана в снаряжение!", tomeType.title, RomanNumeralUtil.toRoman(tomeLevel))), true);
+                            return ActionResult.SUCCESS;
+                        }
                     }
-                }
-            } else {
-                    if (OccultEnchantmentHelper.canApply(tomeType.id, held)) {
-                        OccultEnchantmentHelper.applyOccultEnchantment(held, tomeType.id, tomeType.level);
+                } else {
+                    if (OccultEnchantmentHelper.canApply(enchantId, held)) {
+                        OccultEnchantmentHelper.applyOccultEnchantment(held, enchantId, tomeLevel);
                         offhand.decrement(1);
                         player.damage(serverWorld.getDamageSources().magic(), 4.0f);
 
@@ -111,7 +122,7 @@ public class CultAltarBlock extends Block implements PolymerHeadBlock {
                         serverWorld.spawnParticles(ParticleTypes.CRIMSON_SPORE, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 30, 0.4, 0.4, 0.4, 0.1);
                         serverWorld.spawnParticles(ParticleTypes.PORTAL, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 20, 0.3, 0.3, 0.3, 0.1);
 
-                        player.sendMessage(Text.literal(String.format("§5[Кровавый Ритуал]: §dКровь впиталась в алтарь! «%s» впечатано в инструмент!", OccultEnchantmentHelper.getDisplayName(tomeType.id, tomeType.level))), true);
+                        player.sendMessage(Text.literal(String.format("§5[Кровавый Ритуал]: §dКровь впиталась в алтарь! «%s» впечатано в инструмент!", OccultEnchantmentHelper.getDisplayName(enchantId, tomeLevel))), true);
                         return ActionResult.SUCCESS;
                     } else {
                         player.sendMessage(Text.literal("§c[Алтарь отвергает жертву]: Этот фолиант несовместим с данным инструментом!"), true);

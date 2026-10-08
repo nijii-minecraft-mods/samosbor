@@ -56,14 +56,26 @@ public class ModItems {
     public static final Item BIOMASS_HEART = register("biomass_heart", new BiomassHeartItem());
     public static final Item VALERA_DOGTAG = register("valera_dogtag", new ValeraDogTagItem());
     public static final Item BORSHCHEVIK_EXTRACT = register("borshchevik_extract", new BorshchevikExtractItem());
+    public static final Item ANOMALY_CORE = register("anomaly_core", new AnomalyCoreItem());
+    public static final Item PROJECT_SODEYSTVIE = register("project_sodeystvie", new ProjectSodeystvieItem());
 
-    // Samosbor Occult Enchantment Tomes
+    // Soviet Anomalous Vials & Special Medical Ampoules
+    public static final Item RIFT_SPLASH_POTION = register("rift_splash_potion", new RiftSplashPotionItem());
+    public static final Item CS4_AEROSOL = register("cs4_aerosol", new Cs4AerosolItem());
+    public static final Item SR11_STABILIZER = register("sr11_stabilizer", new Sr11StabilizerItem());
+    public static final Item IM9_INHIBITOR = register("im9_inhibitor", new Im9InhibitorItem());
+    public static final Item AJ11_FLUID = register("aj11_fluid", new Aj11FluidItem());
+
+    // Samosbor Occult Enchantment Tomes (Tiers up to XXV)
     public static final Item OCCULT_TOME_RIFT = register("occult_tome_rift", new OccultTomeItem(OccultTomeItem.TomeType.RIFT_BREACH));
     public static final Item OCCULT_TOME_BIOMASS = register("occult_tome_biomass", new OccultTomeItem(OccultTomeItem.TomeType.BIOMASS_CONTAGION));
     public static final Item OCCULT_TOME_CONCRETE = register("occult_tome_concrete", new OccultTomeItem(OccultTomeItem.TomeType.CONCRETE_TRANSMUTATION));
     public static final Item OCCULT_TOME_BORSHCHEVIK = register("occult_tome_borshchevik", new OccultTomeItem(OccultTomeItem.TomeType.BORSHCHEVIK_POISON));
+    public static final Item OCCULT_TOME_SPEAR = register("occult_tome_spear", new OccultTomeItem(OccultTomeItem.TomeType.PIERCING_SPEAR));
+    public static final Item OCCULT_TOME_BARRIER = register("occult_tome_barrier", new OccultTomeItem(OccultTomeItem.TomeType.ENERGY_BARRIER));
+    public static final Item OCCULT_TOME_PLASMA = register("occult_tome_plasma", new OccultTomeItem(OccultTomeItem.TomeType.PLASMA_PURGE));
 
-    // Party Nomenklatura High-Level / Over-leveled Directives (Level X - XIII)
+    // Party Nomenklatura High-Level / Over-leveled Directives (Tiers up to XXV)
     public static final Item PARTY_TOME_SHARPNESS = register("party_tome_sharpness", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_SHARPNESS));
     public static final Item PARTY_TOME_LOOTING = register("party_tome_looting", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_LOOTING));
     public static final Item PARTY_TOME_EFFICIENCY = register("party_tome_efficiency", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_EFFICIENCY));

@@ -62,6 +62,28 @@
           "name": "minecraft:diamond",
           "weight": 15,
           "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:aj11_fluid",
+          "weight": 20,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:im9_inhibitor",
+          "weight": 18,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:anomaly_core",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:occult_tome_spear",
+          "weight": 14
         }
       ]
     }

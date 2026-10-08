@@ -75,6 +75,11 @@
           "type": "minecraft:item",
           "name": "samosbor:cassette_tape",
           "weight": 12
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:sr11_stabilizer",
+          "weight": 10
         }
       ]
     }

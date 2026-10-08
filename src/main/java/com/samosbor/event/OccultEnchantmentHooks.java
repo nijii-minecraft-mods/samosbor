@@ -45,6 +45,7 @@ public class OccultEnchantmentHooks {
         registerAttackEntityHook();
         registerBlockBreakHook();
         registerEntityDeathHook();
+        registerEnergyBarrierHook();
     }
 
     private static void registerUseBlockHook() {
@@ -228,7 +229,63 @@ public class OccultEnchantmentHooks {
                 }
             }
 
+            // 3. PIERCING SPEAR: Bypasses armor and invulnerability frames with direct kinetic/magic breach
+            int spearLevel = OccultEnchantmentHelper.getLevel(held, OccultEnchantmentHelper.PIERCING_SPEAR);
+            if (spearLevel > 0) {
+                float pierceDamage = 4.0f + spearLevel * 1.5f;
+                target.timeUntilRegen = 0; // Bypass i-frames
+                target.damage(serverWorld.getDamageSources().magic(), pierceDamage);
+
+                serverWorld.spawnParticles(ParticleTypes.CRIT, target.getX(), target.getY() + 1.0, target.getZ(), 20, 0.3, 0.3, 0.3, 0.2);
+                serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, target.getX(), target.getY() + 1.0, target.getZ(), 15, 0.3, 0.3, 0.3, 0.1);
+                serverWorld.playSound(null, target.getBlockPos(), SoundEvents.ITEM_TRIDENT_THUNDER.value(), SoundCategory.PLAYERS, 1.0f, 1.4f);
+                serverWorld.playSound(null, target.getBlockPos(), SoundEvents.ITEM_SHIELD_BREAK, SoundCategory.PLAYERS, 0.8f, 1.2f);
+
+                player.sendMessage(Text.literal(String.format("§c[Пробойная Пика ПК-%d]: Прямой кинетический пробой! Броня цели пробита!", spearLevel)), true);
+            }
+
             return ActionResult.PASS;
+        });
+    }
+
+    private static void registerEnergyBarrierHook() {
+        ServerLivingEntityEvents.ALLOW_DAMAGE.register((LivingEntity entity, DamageSource source, float amount) -> {
+            if (!(entity instanceof ServerPlayerEntity player) || !player.isBlocking() || !(player.getWorld() instanceof ServerWorld serverWorld)) {
+                return true;
+            }
+
+            ItemStack active = player.getActiveItem();
+            int barrierLevel = OccultEnchantmentHelper.getLevel(active, OccultEnchantmentHelper.ENERGY_BARRIER);
+            if (barrierLevel <= 0) return true;
+
+            // Reflect projectiles if source is projectile
+            if (source.getSource() instanceof net.minecraft.entity.projectile.ProjectileEntity projectile) {
+                net.minecraft.util.math.Vec3d look = player.getRotationVector();
+                projectile.setVelocity(look.x * 2.5, look.y * 2.5, look.z * 2.5);
+                projectile.setOwner(player);
+                serverWorld.spawnParticles(ParticleTypes.ELECTRIC_SPARK, projectile.getX(), projectile.getY(), projectile.getZ(), 15, 0.2, 0.2, 0.2, 0.1);
+            }
+
+            // Shockwave pulse knocking back nearby enemies
+            double radius = 4.0 + barrierLevel * 0.3;
+            List<HostileEntity> hostiles = serverWorld.getEntitiesByClass(
+                    HostileEntity.class,
+                    new Box(player.getBlockPos()).expand(radius),
+                    e -> e.isAlive()
+            );
+
+            for (HostileEntity foe : hostiles) {
+                net.minecraft.util.math.Vec3d knock = foe.getPos().subtract(player.getPos()).normalize().multiply(1.0 + barrierLevel * 0.1);
+                foe.addVelocity(knock.x, 0.3, knock.z);
+                foe.damage(serverWorld.getDamageSources().generic(), 2.0f + barrierLevel * 0.8f);
+                serverWorld.spawnParticles(ParticleTypes.SONIC_BOOM, foe.getX(), foe.getY() + 1.0, foe.getZ(), 1, 0, 0, 0, 0);
+            }
+
+            serverWorld.spawnParticles(ParticleTypes.SONIC_BOOM, player.getX(), player.getY() + 1.0, player.getZ(), 1, 0, 0, 0, 0);
+            serverWorld.playSound(null, player.getBlockPos(), SoundEvents.ENTITY_WARDEN_SONIC_BOOM, SoundCategory.PLAYERS, 1.0f, 1.2f);
+            player.sendMessage(Text.literal(String.format("§9[Энергобарьер ЭБ-%d]: Кинетический импульс отразил атаку!", barrierLevel)), true);
+
+            return true;
         });
     }
 

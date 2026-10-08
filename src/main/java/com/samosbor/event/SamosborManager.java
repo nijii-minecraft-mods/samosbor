@@ -8,6 +8,9 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.SpawnReason;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.mob.DrownedEntity;
+import net.minecraft.entity.mob.EndermiteEntity;
+import net.minecraft.entity.mob.SilverfishEntity;
 import net.minecraft.entity.mob.ZombieEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket;
@@ -266,30 +269,91 @@ public class SamosborManager {
                 int distFromCenter = Math.abs(playerFloor - 85);
                 int mobRoll = world.random.nextInt(100);
 
-                if (distFromCenter > 45 && mobRoll < 15) {
-                    // 1. APEX MINI-BOSS: Апекс-Мимик (Реликт Прорыва)
-                    ZombieEntity valera = EntityType.ZOMBIE.create(world);
-                    if (valera != null) {
-                        valera.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
-                        valera.setCustomName(Text.literal("§4§lАпекс-Мимик (Реликт Прорыва)"));
-                        valera.setCustomNameVisible(true);
-                        valera.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
-                        valera.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE));
-                        valera.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.ROKS3_FLAMETHROWER));
-                        valera.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.VALERA_DOGTAG));
-                        valera.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.40f);
-                        valera.setEquipmentDropChance(EquipmentSlot.OFFHAND, 1.0f);
-                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 3600, 2));
-                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 3600, 2));
-                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 3600, 2));
-                        valera.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 3600, 0));
+                if (distFromCenter > 40 && mobRoll < 12) {
+                    // 1. АБЕРРАЦИЯ А-14 (Апостол Вентиляции) - User #36
+                    ZombieEntity a14 = EntityType.ZOMBIE.create(world);
+                    if (a14 != null) {
+                        a14.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        a14.setCustomName(Text.literal("§4§lАберрация А-14 (Апостол Вентиляции)"));
+                        a14.setCustomNameVisible(true);
+                        a14.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
+                        a14.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.NETHERITE_CHESTPLATE));
+                        a14.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.ROKS3_FLAMETHROWER));
+                        a14.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.ANOMALY_CORE));
+                        a14.setEquipmentDropChance(EquipmentSlot.OFFHAND, 1.0f);
+                        a14.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.40f);
+                        a14.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 4800, 2));
+                        a14.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 4800, 2));
+                        a14.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 4800, 2));
+                        a14.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 4800, 0));
 
-                        world.spawnEntity(valera);
-                        world.playSound(null, spawnPos, SoundEvents.ENTITY_WARDEN_ROAR, SoundCategory.HOSTILE, 1.5f, 0.6f);
-                        broadcastMessage(world, Text.literal("§4§l[!] ИЗ ВЕНТШАХТЫ ВЫРВАЛСЯ АПЕКС-МИМИК! РЕЛИКТ ПРОРЫВА РАЗРЫВАЕТ СТАЛЬ!"));
+                        world.spawnEntity(a14);
+                        world.playSound(null, spawnPos, SoundEvents.ENTITY_WARDEN_ROAR, SoundCategory.HOSTILE, 1.6f, 0.5f);
+                        broadcastMessage(world, Text.literal("§4§l[!] ИЗ ВЕНТШАХТЫ ВЫРВАЛАСЬ АБЕРРАЦИЯ А-14! АПОСТОЛ ВЕНТИЛЯЦИИ СОКРУШАЕТ БЕТОН!"));
                     }
-                } else if (mobRoll < 35) {
-                    // 2. Сектант Великой Биомассы (Cultist)
+                } else if (mobRoll < 22) {
+                    // 2. Ликвидатор Спецпрототипа ЭК-5 - User #37
+                    ZombieEntity ek5 = EntityType.ZOMBIE.create(world);
+                    if (ek5 != null) {
+                        ek5.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        ek5.setCustomName(Text.literal("§c§lЛиквидатор Спецпрототипа ЭК-5"));
+                        ek5.setCustomNameVisible(true);
+                        ek5.equipStack(EquipmentSlot.HEAD, new ItemStack(ModItems.GAS_MASK));
+                        ek5.equipStack(EquipmentSlot.CHEST, new ItemStack(ModItems.L1M_SUIT));
+                        ek5.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.JP11_CARBINE));
+                        ek5.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.SR11_STABILIZER));
+                        ek5.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
+                        ek5.setEquipmentDropChance(EquipmentSlot.OFFHAND, 0.80f);
+                        ek5.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 1));
+                        ek5.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 2400, 1));
+
+                        world.spawnEntity(ek5);
+                        broadcastMessage(world, Text.literal("§c[Ликвидатор ЭК-5]: «ПРОТОКОЛ ЗАКРЫТИЯ СЕКТОРА АКТИВИРОВАН. ЦЕЛЬ БУДЕТ ВЫЖЖЕНА.»"));
+                    }
+                } else if (mobRoll < 34) {
+                    // 3. Аберрация А-19 (Многорукий Парторг) - User #42
+                    ZombieEntity a19 = EntityType.ZOMBIE.create(world);
+                    if (a19 != null) {
+                        a19.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        a19.setCustomName(Text.literal("§4Аберрация А-19 (Многорукий Парторг)"));
+                        a19.setCustomNameVisible(true);
+                        a19.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.WITHER_SKELETON_SKULL));
+                        a19.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.IRON_CHESTPLATE));
+                        a19.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.HEAVY_CROWBAR));
+                        a19.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.PROJECT_SODEYSTVIE));
+                        a19.setEquipmentDropChance(EquipmentSlot.OFFHAND, 0.50f);
+                        a19.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.30f);
+                        a19.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 1));
+                        a19.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 2400, 1));
+
+                        world.spawnEntity(a19);
+                        broadcastMessage(world, Text.literal("§4[Аберрация А-19]: «ВСЕ НА СУББОТНИК... СДАТЬ НОРМУ ПЛОТИ... СЛАВА ПАРТИИ!»"));
+                    }
+                } else if (mobRoll < 44) {
+                    // 4. Псевдо-эмбрион ПЭ-2 - User #43
+                    DrownedEntity pe2 = EntityType.DROWNED.create(world);
+                    if (pe2 != null) {
+                        pe2.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        pe2.setCustomName(Text.literal("§3Псевдо-эмбрион ПЭ-2"));
+                        pe2.setCustomNameVisible(true);
+                        pe2.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.AJ11_FLUID));
+                        pe2.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.40f);
+                        pe2.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 1));
+                        pe2.addStatusEffect(new StatusEffectInstance(StatusEffects.DOLPHINS_GRACE, 2400, 1));
+                        world.spawnEntity(pe2);
+                    }
+                } else if (mobRoll < 54) {
+                    // 5. Нейропаразит НП-1 - User #40
+                    SilverfishEntity np1 = EntityType.SILVERFISH.create(world);
+                    if (np1 != null) {
+                        np1.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
+                        np1.setCustomName(Text.literal("§cНейропаразит НП-1"));
+                        np1.setCustomNameVisible(true);
+                        np1.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 2));
+                        world.spawnEntity(np1);
+                    }
+                } else if (mobRoll < 66) {
+                    // 6. Сектант Великой Биомассы
                     ZombieEntity cultist = EntityType.ZOMBIE.create(world);
                     if (cultist != null) {
                         cultist.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
@@ -300,35 +364,15 @@ public class SamosborManager {
                         cultist.equipStack(EquipmentSlot.OFFHAND, new ItemStack(ModItems.BIOMASS_GRIMOIRE));
                         cultist.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.25f);
                         cultist.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
-                        cultist.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1800, 0));
 
                         world.spawnEntity(cultist);
                         if (world.random.nextBoolean()) {
                             broadcastMessage(world, Text.literal("§5[Сектант Биомассы]: §d«Святая Мякоть, раствори наш страх! Впусти Туман!»"));
                         }
                     }
-                } else if (mobRoll < 60) {
-                    // 3. Обезумевший Ликвидатор (Rogue Liquidator)
-                    ZombieEntity rogue = EntityType.ZOMBIE.create(world);
-                    if (rogue != null) {
-                        rogue.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
-                        rogue.setCustomName(Text.literal("§cОбезумевший Ликвидатор"));
-                        rogue.setCustomNameVisible(true);
-                        rogue.equipStack(EquipmentSlot.HEAD, new ItemStack(ModItems.GAS_MASK));
-                        rogue.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.IRON_CHESTPLATE));
-                        rogue.equipStack(EquipmentSlot.MAINHAND, new ItemStack(world.random.nextBoolean() ? ModItems.FLAMETHROWER : ModItems.JP11_CARBINE));
-                        rogue.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
-                        rogue.setEquipmentDropChance(EquipmentSlot.HEAD, 0.30f);
-                        rogue.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
-
-                        world.spawnEntity(rogue);
-                        if (world.random.nextBoolean()) {
-                            broadcastMessage(world, Text.literal("§6[Обезумевший Ликвидатор]: §c«ОНИ В СТЕНАХ! ВЫЖЕЧЬ ВСЁ ДО АРМАТУРЫ! ОГОНЬ!»"));
-                        }
-                    }
-                } else if (mobRoll < 75) {
-                    // 4. Мясная Пиявка (Biomass Leech)
-                    net.minecraft.entity.mob.EndermiteEntity leech = EntityType.ENDERMITE.create(world);
+                } else if (mobRoll < 76) {
+                    // 7. Мясная Пиявка Вентиляции
+                    EndermiteEntity leech = EntityType.ENDERMITE.create(world);
                     if (leech != null) {
                         leech.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
                         leech.setCustomName(Text.literal("§4Мясная Пиявка Вентиляции"));
@@ -337,7 +381,7 @@ public class SamosborManager {
                         world.spawnEntity(leech);
                     }
                 } else {
-                    // 5. Standard or Mutated Mimic
+                    // 8. Standard or Mutated Mimic
                     ZombieEntity mimic = EntityType.ZOMBIE.create(world);
                     if (mimic != null) {
                         mimic.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);

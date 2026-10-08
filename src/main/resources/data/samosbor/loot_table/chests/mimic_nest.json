@@ -73,6 +73,22 @@
           "name": "samosbor:borshchevik_extract",
           "weight": 18,
           "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:rift_splash_potion",
+          "weight": 12,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:anomaly_core",
+          "weight": 8
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:occult_tome_spear",
+          "weight": 12
         }
       ]
     }

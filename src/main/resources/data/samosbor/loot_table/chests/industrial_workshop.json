@@ -52,6 +52,16 @@
           "name": "minecraft:chain",
           "weight": 20,
           "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 6 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:occult_tome_concrete",
+          "weight": 14
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:occult_tome_plasma",
+          "weight": 10
         }
       ]
     }

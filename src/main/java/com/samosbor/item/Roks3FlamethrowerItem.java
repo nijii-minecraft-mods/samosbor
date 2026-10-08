@@ -40,12 +40,20 @@ public class Roks3FlamethrowerItem extends Item implements PolymerItem {
             Vec3d look = user.getRotationVector();
             Vec3d eyePos = user.getEyePos();
 
-            // Stream of intense thermite flame up to 14 blocks
-            for (int i = 1; i <= 14; i++) {
+            int plasmaLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getLevel(stack, com.samosbor.enchantment.OccultEnchantmentHelper.PLASMA_PURGE);
+            int range = (plasmaLvl > 0) ? (14 + plasmaLvl * 2) : 14;
+            float damage = 14.0f + (plasmaLvl * 4.0f);
+            float fireSeconds = 8.0f + (plasmaLvl * 3.0f);
+
+            // Stream of intense thermite flame up to range
+            for (int i = 1; i <= range; i++) {
                 Vec3d partPos = eyePos.add(look.multiply(i));
                 serverWorld.spawnParticles(ParticleTypes.FLAME, partPos.x, partPos.y, partPos.z, 8, 0.4, 0.4, 0.4, 0.08);
                 serverWorld.spawnParticles(ParticleTypes.LAVA, partPos.x, partPos.y, partPos.z, 2, 0.2, 0.2, 0.2, 0.05);
                 serverWorld.spawnParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, partPos.x, partPos.y, partPos.z, 3, 0.3, 0.3, 0.3, 0.04);
+                if (plasmaLvl > 0) {
+                    serverWorld.spawnParticles(ParticleTypes.SOUL_FIRE_FLAME, partPos.x, partPos.y, partPos.z, 3, 0.3, 0.3, 0.3, 0.05);
+                }
 
                 // Incinerate biomass blocks in flame ray
                 BlockPos bPos = BlockPos.ofFloored(partPos);
@@ -56,16 +64,28 @@ public class Roks3FlamethrowerItem extends Item implements PolymerItem {
             }
 
             // High damage AOE cone
-            Vec3d endPos = eyePos.add(look.multiply(14));
-            Box coneBox = new Box(eyePos, endPos).expand(2.5);
+            Vec3d endPos = eyePos.add(look.multiply(range));
+            Box coneBox = new Box(eyePos, endPos).expand(2.5 + (plasmaLvl * 0.4));
             List<LivingEntity> targets = world.getEntitiesByClass(LivingEntity.class, coneBox, e -> e != user && e.isAlive());
 
             for (LivingEntity target : targets) {
-                target.setOnFireFor(8.0f);
-                target.damage(serverWorld.getDamageSources().onFire(), 14.0f);
+                target.setOnFireFor(fireSeconds);
+                target.damage(serverWorld.getDamageSources().onFire(), damage);
                 // Knockback
-                Vec3d push = look.multiply(0.6);
+                Vec3d push = look.multiply(0.6 + (plasmaLvl * 0.2));
                 target.addVelocity(push.x, 0.2, push.z);
+
+                // Plasma armor melting
+                if (plasmaLvl > 0) {
+                    for (net.minecraft.entity.EquipmentSlot slot : net.minecraft.entity.EquipmentSlot.values()) {
+                        if (slot.isArmorSlot()) {
+                            ItemStack armor = target.getEquippedStack(slot);
+                            if (!armor.isEmpty()) {
+                                armor.damage(3 * plasmaLvl, target, slot);
+                            }
+                        }
+                    }
+                }
             }
 
             world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ENTITY_BLAZE_SHOOT, SoundCategory.PLAYERS, 1.2f, 0.7f);

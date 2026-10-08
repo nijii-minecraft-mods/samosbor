@@ -953,6 +953,30 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chunk.setBlockEntity(barrel);
     }
 
+    private void placeCustomLootChest(Chunk chunk, BlockPos pos, ItemStack... items) {
+        chunk.setBlockState(pos, Blocks.CHEST.getDefaultState(), false);
+        ChestBlockEntity chest = new ChestBlockEntity(pos.toImmutable(), Blocks.CHEST.getDefaultState());
+        int slot = 0;
+        for (ItemStack item : items) {
+            if (slot < chest.size() && item != null && !item.isEmpty()) {
+                chest.setStack(slot++, item);
+            }
+        }
+        chunk.setBlockEntity(chest);
+    }
+
+    private void placeCustomLootBarrel(Chunk chunk, BlockPos pos, ItemStack... items) {
+        chunk.setBlockState(pos, Blocks.BARREL.getDefaultState(), false);
+        BarrelBlockEntity barrel = new BarrelBlockEntity(pos.toImmutable(), Blocks.BARREL.getDefaultState());
+        int slot = 0;
+        for (ItemStack item : items) {
+            if (slot < barrel.size() && item != null && !item.isEmpty()) {
+                barrel.setStack(slot++, item);
+            }
+        }
+        chunk.setBlockEntity(barrel);
+    }
+
     private void placeWallNotice(Chunk chunk, BlockPos pos, Direction facing, String l1, String l2, String l3, String l4, DyeColor color) {
         chunk.setBlockState(pos, Blocks.OAK_WALL_SIGN.getDefaultState().with(WallSignBlock.FACING, facing), false);
         SignBlockEntity sign = new SignBlockEntity(pos.toImmutable(), Blocks.OAK_WALL_SIGN.getDefaultState());
@@ -986,7 +1010,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        int variant = Math.abs((int) (seed % 37));
+        int variant = Math.abs((int) (seed % 47));
 
         switch (archetype) {
             case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, floor, variant, minX, maxX, minZ, maxZ, doorX, doorZ, seed);
@@ -1609,8 +1633,265 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.LIQUIDATOR_CACHE), seed);
                 placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§6РЖАВЫЙ БОГ", "§0Чёрный Краз грядёт", "§0Отвергни плоть —", "§4СТАЛЬ ВЕЧНА", DyeColor.ORANGE);
             }
+            case 36 -> {
+                // 37. Incubation Aquarium «ИНК-7» / «Спецрезервуар Б-11»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_DEEPSLATE.getDefaultState(), false);
+                    }
+                }
+                int fluidType = Math.abs((int) ((seed / 3) % 3));
+                BlockState fluidBlock = switch (fluidType) {
+                    case 0 -> Blocks.HONEY_BLOCK.getDefaultState();
+                    case 1 -> Blocks.SLIME_BLOCK.getDefaultState();
+                    default -> Blocks.WATER.getDefaultState();
+                };
+                boolean isCracked = ((seed % 3) == 0);
+
+                for (int y = baseY + 1; y <= baseY + 3; y++) {
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            BlockPos p = mutable.set(midX + dx, y, midZ + dz);
+                            if (dx == 0 && dz == 0) {
+                                if (y == baseY + 2) {
+                                    chunk.setBlockState(p, (fluidType == 0) ? Blocks.ZOMBIE_HEAD.getDefaultState() : Blocks.SKELETON_SKULL.getDefaultState(), false);
+                                } else {
+                                    chunk.setBlockState(p, fluidBlock, false);
+                                }
+                            } else {
+                                if (isCracked && y == baseY + 1 && (dx == 1 || dz == 1)) {
+                                    chunk.setBlockState(p, Blocks.GLASS_PANE.getDefaultState(), false);
+                                } else {
+                                    chunk.setBlockState(p, Blocks.TINTED_GLASS.getDefaultState(), false);
+                                }
+                            }
+                        }
+                    }
+                }
+                if (isCracked) {
+                    chunk.setBlockState(mutable.set(midX + 2, baseY, midZ), fluidBlock, false);
+                    chunk.setBlockState(mutable.set(midX - 2, baseY, midZ + 1), fluidBlock, false);
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 4, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.CAULDRON.getDefaultState(), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.AJ11_FLUID, 1 + (int)(seed % 2)),
+                        new ItemStack(ModItems.IM9_INHIBITOR, 1),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_BIOMASS, scaledLvl)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§3ИНКУБАТОРИЙ Б-11", isCracked ? "§4ТРЕЩИНА В ЦИСТЕРНЕ" : "§0Стазис-контур ИНК-7", "§0Суспензия: АЖ-11", "§cНЕ ПОВРЕЖДАТЬ СТЕКЛО", DyeColor.CYAN);
+            }
+            case 37 -> {
+                // 38. Geofront CO2 Greenhouse «ОКБ-2»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), ((lx + lz) % 2 == 0) ? Blocks.MOSS_BLOCK.getDefaultState() : Blocks.COARSE_DIRT.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, minZ + 1), ModBlocks.MUTATED_BORSHCHEVIK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, minZ + 1), ModBlocks.MUTATED_BORSHCHEVIK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, maxZ - 1), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
+
+                chunk.setBlockState(mutable.set(midX, baseY + 4, midZ), ModBlocks.FLUORESCENT_LAMP.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 4, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 4, midZ), Blocks.CHAIN.getDefaultState(), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootChest(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.BORSHCHEVIK_EXTRACT, 2),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_BORSHCHEVIK, scaledLvl),
+                        new ItemStack(ModItems.GAS_MASK_FILTER, 1)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§2ОРАНЖЕРЕЯ ОКБ-2", "§0Сектор фотосинтеза", "§0CO2: 14.8% — Норма", "§4БЕРЕЧЬСЯ ОЖОГОВ", DyeColor.GREEN);
+            }
+            case 38 -> {
+                // 39. Sector Nerve Node «Узел-Н»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.CRIMSON_NYLIUM.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.REDSTONE_LAMP.getDefaultState().with(net.minecraft.state.property.Properties.LIT, true), false);
+
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 1, midZ), Blocks.REDSTONE_WIRE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.REDSTONE_WIRE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ - 1), Blocks.SCULK_VEIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ + 1), Blocks.SCULK_VEIN.getDefaultState(), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootChest(chunk, mutable.set(minX, baseY + 1, minZ),
+                        new ItemStack(ModItems.BIOMASS_HEART, 1),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_BARRIER, scaledLvl)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§5СВЯЗЬ «УЗЕЛ-Н»", "§0Нервные жилы яруса", "§0Импульс: 180 Гц", "§cНЕ ОБРЫВАТЬ КАБЕЛИ", DyeColor.PURPLE);
+            }
+            case 39 -> {
+                // 40. Test Shaft «Объект 14-Б»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SMOOTH_STONE.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.IRON_BLOCK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 4, midZ), Blocks.CHAIN.getDefaultState(), false);
+
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 2, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 2, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, midZ), Blocks.SCAFFOLDING.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, midZ), Blocks.SCAFFOLDING.getDefaultState(), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootChest(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.PROJECT_SODEYSTVIE, 1),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_SPEAR, scaledLvl),
+                        new ItemStack(ModItems.HEAVY_CROWBAR, 1)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ОБЪЕКТ 14-Б", "§0Шахта Спецкаркаса", "§0Броня: плиты П-46", "§4СОВЕРШЕННО СЕКРЕТНО", DyeColor.RED);
+            }
+            case 40 -> {
+                // 41. Preservation Capsule Block «Спецрезерв Д-6»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_ANDESITE.getDefaultState(), false);
+                    }
+                }
+                for (int dx = -1; dx <= 1; dx += 2) {
+                    chunk.setBlockState(mutable.set(midX + dx, baseY + 1, midZ), Blocks.TINTED_GLASS.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX + dx, baseY + 2, midZ), Blocks.SKELETON_SKULL.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX + dx, baseY + 3, midZ), Blocks.IRON_TRAPDOOR.getDefaultState().with(net.minecraft.block.TrapdoorBlock.HALF, net.minecraft.block.enums.BlockHalf.TOP), false);
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.OLD_TV.getDefaultState().with(OldTvBlock.FACING, Direction.SOUTH), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), ModBlocks.MEDKIT_BOX.getDefaultState().with(MedkitBoxBlock.FACING, Direction.SOUTH), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootChest(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.L1M_SUIT, 1),
+                        new ItemStack(ModItems.SR11_STABILIZER, 2),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.PARTY_TOME_PROTECTION, scaledLvl)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§1СПЕЦРЕЗЕРВ Д-6", "§0Стазис Ликвидаторов", "§0Пломба не нарушена", "§0Приказ Коменданта", DyeColor.BLUE);
+            }
+            case 41 -> {
+                // 42. Hermetic Blast Gate «Гермоворота ГВ-8»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.YELLOW_TERRACOTTA.getDefaultState(), false);
+                    }
+                }
+                for (int z = minZ; z <= maxZ; z++) {
+                    chunk.setBlockState(mutable.set(midX, baseY + 1, z), Blocks.IRON_BLOCK.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 2, z), (z == midZ) ? ModBlocks.HERMETIC_DOOR.getDefaultState() : Blocks.IRON_BARS.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 3, z), Blocks.PISTON.getDefaultState().with(net.minecraft.state.property.Properties.FACING, Direction.DOWN), false);
+                }
+                chunk.setBlockState(mutable.set(minX, baseY + 3, midZ), ModBlocks.EMERGENCY_SIREN.getDefaultState(), false);
+
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.CIVIL_DEFENSE_DEPOT), seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§eШЛЮЗ ГВ-8", "§0Гидрозатвор яруса", "§0Закрывать при гуле!", "§0ГО СССР", DyeColor.YELLOW);
+            }
+            case 42 -> {
+                // 43. Magma Core Power Block «Ядро К-2»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.POLISHED_BLACKSTONE.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CAULDRON.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.MAGMA_BLOCK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.IRON_BARS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 4, midZ), Blocks.CHAIN.getDefaultState(), false);
+
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 2, midZ), Blocks.LIGHTNING_ROD.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 2, midZ), Blocks.LIGHTNING_ROD.getDefaultState(), false);
+
+                int delta = Math.abs(floor - 85);
+                int plasmaTier = Math.min(3, 1 + delta / 30);
+                placeCustomLootChest(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.ROKS3_FLAMETHROWER, 1),
+                        new ItemStack(ModItems.ACETYLENE_CANISTER, 2),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_PLASMA, plasmaTier)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§6РЕАКТОР «ЯДРО К-2»", "§0Тепловая станция", "§0Температура: 1400°C", "§4ВЫБРОС ПЛАЗМЫ", DyeColor.ORANGE);
+            }
+            case 43 -> {
+                // 44. Psychological Fixation Chamber «Спецсектор 9»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.RED_TERRACOTTA.getDefaultState(), false);
+                    }
+                }
+                boolean useCogwheel = (seed % 2 == 0);
+                if (useCogwheel) {
+                    chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.EXPOSED_COPPER.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.CUT_COPPER.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.COPPER_GRATE.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX - 1, baseY + 2, midZ), Blocks.CHIPPED_ANVIL.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX + 1, baseY + 2, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 2, midZ - 1), Blocks.CHAIN.getDefaultState(), false);
+                } else {
+                    chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), ModBlocks.P46_PANEL.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX - 1, baseY + 2, midZ), Blocks.IRON_BARS.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX + 1, baseY + 2, midZ), Blocks.IRON_BARS.getDefaultState(), false);
+                    chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+                }
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.CULT_ALTAR.getDefaultState(), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootChest(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.ANOMALY_CORE, 1),
+                        new ItemStack(ModItems.RIFT_SPLASH_POTION, 2),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_RIFT, scaledLvl)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4СПЕЦСЕКТОР 9", useCogwheel ? "§0Шестерня Ржавого Бога" : "§0Монолитная фиксация", "§0Пункт очистки душ", "§4ОТВЕРГНИ ПЛОТЬ", DyeColor.RED);
+            }
+            case 44 -> {
+                // 45. Autoclave Bioreactor «БР-11»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.STONE_BRICKS.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.BLAST_FURNACE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.HOPPER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), ModBlocks.BIOMASS.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 1, midZ), Blocks.CAULDRON.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.ANVIL.getDefaultState(), false);
+
+                int scaledLvl = com.samosbor.enchantment.OccultEnchantmentHelper.getScaledFloorLevel(floor, seed);
+                placeCustomLootBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModBlocks.P46_PANEL.asItem(), 8),
+                        new ItemStack(Items.IRON_INGOT, 4),
+                        com.samosbor.item.OccultTomeItem.createStack(ModItems.OCCULT_TOME_CONCRETE, scaledLvl)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§7АВТОКЛАВ БР-11", "§0Биореактор синтеза", "§0Сырьё: биомасса", "§0Выход: П-46 и металл", DyeColor.GRAY);
+            }
+            case 45 -> {
+                // 46. Food Synthesizer «ПС-4»
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.WHITE_TERRACOTTA.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.FOOD_DISPENSER.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 1, midZ), ModBlocks.RUSTY_SINK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), ModBlocks.GAS_STOVE.getDefaultState().with(GasStoveBlock.FACING, Direction.SOUTH), false);
+
+                placeCustomLootBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ),
+                        new ItemStack(ModItems.FOOD_CONCENTRATE, 6),
+                        new ItemStack(ModItems.CANNED_STEW, 3),
+                        new ItemStack(ModItems.RATION_TICKET, 5),
+                        new ItemStack(ModItems.HARDTACK, 4)
+                );
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§6СИНТЕЗАТОР ПС-4", "§0Раздаточный блок", "§0Норма: 1 банка/смена", "§2СЛАВА ПАРТИИ!", DyeColor.YELLOW);
+            }
             default -> {
-                // 37. Outer Wall Cartographer Outpost (Аванпост Искателей Выхода)
+                // 47. Outer Wall Cartographer Outpost (Аванпост Искателей Выхода)
                 for (int lx = minX; lx <= maxX; lx++) {
                     for (int lz = minZ; lz <= maxZ; lz++) {
                         chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.STRIPPED_SPRUCE_WOOD.getDefaultState(), false);
