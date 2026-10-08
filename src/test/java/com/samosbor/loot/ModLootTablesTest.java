@@ -57,7 +57,8 @@ public class ModLootTablesTest {
                 "chlorine_grenade.json",
                 "mushroom_moonshine.json",
                 "dosimeter.json",
-                "jp11_canister.json"
+                "jp11_canister.json",
+                "acoustic_stethoscope.json"
         };
 
         File dir = new File("src/main/resources/data/samosbor/recipe");

@@ -8,6 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.SkullBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -48,6 +49,32 @@ public class GasStoveBlock extends Block implements PolymerHeadBlock {
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (!world.isClient) {
             boolean isLit = state.get(LIT);
+            ItemStack held = player.getMainHandStack();
+
+            // Cooking Freeze-Dried Borscht
+            if (held.isOf(com.samosbor.item.ModItems.FREEZE_DRIED_BORSCHT)) {
+                if (isLit) {
+                    if (!player.getAbilities().creativeMode) {
+                        held.decrement(1);
+                    }
+                    ItemStack cooked = new ItemStack(com.samosbor.item.ModItems.COOKED_BORSCHT);
+                    if (!player.getInventory().insertStack(cooked)) {
+                        player.dropItem(cooked, false);
+                    }
+                    world.playSound(null, pos, SoundEvents.BLOCK_BUBBLE_COLUMN_UPWARDS_AMBIENT, SoundCategory.BLOCKS, 1.0f, 1.2f);
+                    world.playSound(null, pos, SoundEvents.BLOCK_CAMPFIRE_CRACKLE, SoundCategory.BLOCKS, 0.8f, 1.2f);
+                    if (world instanceof net.minecraft.server.world.ServerWorld sw) {
+                        sw.spawnParticles(net.minecraft.particle.ParticleTypes.CAMPFIRE_COSY_SMOKE, pos.getX() + 0.5, pos.getY() + 0.9, pos.getZ() + 0.5, 8, 0.1, 0.2, 0.1, 0.02);
+                    }
+                    player.sendMessage(Text.literal("§c[Плита «Лысьва»]: Борщ закипел! Получен горячий наваристый борщ."), true);
+                    return ActionResult.SUCCESS;
+                } else {
+                    player.sendMessage(Text.literal("§e[Плита «Лысьва»]: Сначала зажгите конфорку для готовки."), true);
+                    return ActionResult.SUCCESS;
+                }
+            }
+
+            // Toggle gas burner flame
             boolean newLit = !isLit;
             world.setBlockState(pos, state.with(LIT, newLit), Block.NOTIFY_LISTENERS);
 

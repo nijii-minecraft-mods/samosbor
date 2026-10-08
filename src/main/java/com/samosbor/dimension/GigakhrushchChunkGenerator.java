@@ -14,6 +14,7 @@ import com.samosbor.block.NoticeBoardBlock;
 import com.samosbor.block.MedkitBoxBlock;
 import com.samosbor.block.EmergencySirenBlock;
 import com.samosbor.loot.ModLootTables;
+import com.samosbor.item.ModItems;
 import com.samosbor.dimension.GigakhrushchLayout.FloorArchetype;
 import com.samosbor.dimension.GigakhrushchLayout.CourtyardType;
 import net.minecraft.block.BedBlock;
@@ -621,7 +622,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             chunk.setBlockState(mutable.set(8, baseY + 2, 5), air, false);
             chunk.setBlockState(mutable.set(8, baseY + 1, 4), air, false);
             chunk.setBlockState(mutable.set(8, baseY + 2, 4), air, false);
-            placeBarrel(chunk, mutable.set(8, baseY + 1, 4), LootTables.ABANDONED_MINESHAFT_CHEST, seed);
+            placeBarrel(chunk, mutable.set(8, baseY + 1, 4), ModLootTables.CIVIL_DEFENSE_DEPOT, seed);
             chunk.setBlockState(mutable.set(8, baseY + 3, 4), emergLamp, false);
 
             // Tunnel Access Door to Sector Corridor at lx=7, lz=10
@@ -638,7 +639,9 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
         chest.setStack(2, new ItemStack(Items.POWERED_RAIL, 16));
         chest.setStack(3, new ItemStack(Items.COAL, 16));
         chest.setStack(4, new ItemStack(Items.TORCH, 16));
-        chest.setStack(5, new ItemStack(Items.BREAD, 8));
+        chest.setStack(5, new ItemStack(ModItems.HARDTACK, 16));
+        chest.setStack(6, new ItemStack(ModItems.CANNED_STEW, 2));
+        chest.setStack(7, new ItemStack(ModItems.BLUE_TAPE, 1));
         chunk.setBlockEntity(chest);
     }
 

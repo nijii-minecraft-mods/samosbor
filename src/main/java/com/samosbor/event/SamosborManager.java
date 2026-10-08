@@ -177,11 +177,25 @@ public class SamosborManager {
     }
 
     private static void tickEscalation(ServerWorld world, List<ServerPlayerEntity> players) {
-        // Escalation: howling alarm sirens!
+        // Escalation: howling alarm sirens and synchronized siren beacons!
         if (phaseTimer % 40 == 0) {
             for (ServerPlayerEntity player : players) {
                 world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.EVENT_RAID_HORN.value(), SoundCategory.HOSTILE, 2.0f, 0.8f);
                 world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_BELL_USE, SoundCategory.BLOCKS, 1.5f, 0.6f);
+
+                BlockPos pPos = player.getBlockPos();
+                for (int dx = -8; dx <= 8; dx += 2) {
+                    for (int dy = -2; dy <= 4; dy++) {
+                        for (int dz = -8; dz <= 8; dz += 2) {
+                            BlockPos sPos = pPos.add(dx, dy, dz);
+                            net.minecraft.block.BlockState bState = world.getBlockState(sPos);
+                            if (bState.getBlock() instanceof com.samosbor.block.EmergencySirenBlock && !bState.get(com.samosbor.block.EmergencySirenBlock.LIT)) {
+                                world.setBlockState(sPos, bState.with(com.samosbor.block.EmergencySirenBlock.LIT, true), net.minecraft.block.Block.NOTIFY_LISTENERS);
+                                world.spawnParticles(ParticleTypes.LAVA, sPos.getX() + 0.5, sPos.getY() + 0.8, sPos.getZ() + 0.5, 6, 0.2, 0.2, 0.2, 0.05);
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -279,17 +293,29 @@ public class SamosborManager {
     }
 
     private static void tickRecession(ServerWorld world, List<ServerPlayerEntity> players) {
-        // Recession: clearing particles
+        // Recession: clearing particles and resetting sirens
         for (ServerPlayerEntity player : players) {
             world.spawnParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 1, player.getZ(), 2, 2.0, 1.0, 2.0, 0.01);
+
+            BlockPos pPos = player.getBlockPos();
+            for (int dx = -10; dx <= 10; dx += 2) {
+                for (int dy = -3; dy <= 4; dy++) {
+                    for (int dz = -10; dz <= 10; dz += 2) {
+                        BlockPos sPos = pPos.add(dx, dy, dz);
+                        net.minecraft.block.BlockState bState = world.getBlockState(sPos);
+                        if (bState.getBlock() instanceof com.samosbor.block.EmergencySirenBlock && bState.get(com.samosbor.block.EmergencySirenBlock.LIT)) {
+                            world.setBlockState(sPos, bState.with(com.samosbor.block.EmergencySirenBlock.LIT, false), net.minecraft.block.Block.NOTIFY_LISTENERS);
+                        }
+                    }
+                }
+            }
         }
     }
 
     public static boolean isPlayerSafe(ServerWorld world, ServerPlayerEntity player) {
-        // 1. Gas mask or L-1M Hazmat suit protects against toxic fog
-        ItemStack helmet = player.getEquippedStack(EquipmentSlot.HEAD);
+        // 1. L-1M Hazmat suit grants full NBC immunity
         ItemStack chest = player.getEquippedStack(EquipmentSlot.CHEST);
-        if (helmet.isOf(ModItems.GAS_MASK) || chest.isOf(ModItems.L1M_SUIT)) {
+        if (chest.isOf(ModItems.L1M_SUIT)) {
             return true;
         }
 
@@ -298,62 +324,93 @@ public class SamosborManager {
         int startLx = Math.floorMod(startPos.getX(), 16);
         int startLz = Math.floorMod(startPos.getZ(), 16);
 
-        // Open corridor coordinates: NOT safe
-        if (startLx == 7 || startLx == 8 || startLz == 7 || startLz == 8) {
-            return false;
-        }
+        boolean inOpenCorridor = (startLx == 7 || startLx == 8 || startLz == 7 || startLz == 8);
+        boolean roomAirtight = false;
 
-        java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
-        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
-        queue.add(startPos);
-        visited.add(startPos);
+        if (!inOpenCorridor) {
+            java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
+            java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+            queue.add(startPos);
+            visited.add(startPos);
 
-        int maxAirBlocks = 120;
+            int maxAirBlocks = 120;
+            boolean breached = false;
 
-        while (!queue.isEmpty()) {
-            BlockPos current = queue.poll();
+            while (!queue.isEmpty()) {
+                BlockPos current = queue.poll();
 
-            int lx = Math.floorMod(current.getX(), 16);
-            int lz = Math.floorMod(current.getZ(), 16);
-            if (lx == 7 || lx == 8 || lz == 7 || lz == 8) {
-                return false; // Air path leads into open corridor
-            }
-
-            if (visited.size() > maxAirBlocks) {
-                return false; // Room is breached or unbounded
-            }
-
-            for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
-                BlockPos neighbor = current.offset(dir);
-                if (visited.contains(neighbor)) {
-                    continue;
+                int lx = Math.floorMod(current.getX(), 16);
+                int lz = Math.floorMod(current.getZ(), 16);
+                if (lx == 7 || lx == 8 || lz == 7 || lz == 8) {
+                    breached = true;
+                    break;
                 }
 
-                if (Math.abs(neighbor.getY() - startPos.getY()) > 5) {
-                    return false;
+                if (visited.size() > maxAirBlocks) {
+                    breached = true;
+                    break;
                 }
 
-                net.minecraft.block.BlockState bState = world.getBlockState(neighbor);
-
-                if (bState.getBlock() instanceof HermeticDoorBlock) {
-                    if (HermeticDoorBlock.isSealedAt(world, neighbor)) {
-                        continue; // Sealed door blocks the fog
-                    } else {
-                        return false; // Unsealed door leaks fog
+                for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
+                    BlockPos neighbor = current.offset(dir);
+                    if (visited.contains(neighbor)) {
+                        continue;
                     }
+
+                    if (Math.abs(neighbor.getY() - startPos.getY()) > 5) {
+                        breached = true;
+                        break;
+                    }
+
+                    net.minecraft.block.BlockState bState = world.getBlockState(neighbor);
+
+                    if (bState.getBlock() instanceof HermeticDoorBlock) {
+                        if (HermeticDoorBlock.isSealedAt(world, neighbor)) {
+                            continue; // Sealed hermetic door blocks the fog
+                        } else {
+                            breached = true;
+                            break;
+                        }
+                    }
+
+                    if (!bState.isAir() && !bState.isOf(net.minecraft.block.Blocks.FIRE) && bState.getFluidState().isEmpty() && !bState.getCollisionShape(world, neighbor).isEmpty()) {
+                        continue;
+                    }
+
+                    visited.add(neighbor);
+                    queue.add(neighbor);
                 }
 
-                // If block has solid collision (walls, panes, bars, anvils, cauldrons, sinks, furniture, etc.)
-                if (!bState.isAir() && !bState.isOf(net.minecraft.block.Blocks.FIRE) && bState.getFluidState().isEmpty() && !bState.getCollisionShape(world, neighbor).isEmpty()) {
-                    continue;
-                }
+                if (breached) break;
+            }
 
-                visited.add(neighbor);
-                queue.add(neighbor);
+            if (!breached) {
+                roomAirtight = true;
             }
         }
 
-        return true;
+        // If inside airtight room, player is 100% safe without consuming mask durability
+        if (roomAirtight) {
+            return true;
+        }
+
+        // 3. Exposed to toxic fog: Check Gas Mask durability
+        ItemStack helmet = player.getEquippedStack(EquipmentSlot.HEAD);
+        if (helmet.isOf(ModItems.GAS_MASK)) {
+            if (helmet.getDamage() < helmet.getMaxDamage()) {
+                helmet.damage(1, player, EquipmentSlot.HEAD);
+                if (helmet.getDamage() >= helmet.getMaxDamage() - 25) {
+                    player.sendMessage(Text.literal("§c[ГП-5]: Внимание! Ресурс фильтра ГП-5К почти исчерпан!"), true);
+                    player.playSound(SoundEvents.ENTITY_PLAYER_BREATH, 0.8f, 0.7f);
+                }
+                return true;
+            } else {
+                player.sendMessage(Text.literal("§4[ГП-5]: Фильтр пробит! Едкий туман проникает внутрь!"), true);
+                return false;
+            }
+        }
+
+        return false;
     }
 
     private static void broadcastTitle(ServerWorld world, Text title, Text subtitle, int fadeIn, int stay, int fadeOut) {

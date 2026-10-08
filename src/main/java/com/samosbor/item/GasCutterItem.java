@@ -57,6 +57,11 @@ public class GasCutterItem extends Item implements PolymerItem {
 
             if (!isWelded) {
                 // WELD SHUT
+                if (player != null && !consumeAcetylene(player)) {
+                    player.sendMessage(Text.literal("§c[РГ-3]: Требуется баллон ацетилена АЦ-5 для заваривания двери!"), true);
+                    return ActionResult.FAIL;
+                }
+
                 BlockState newState = state.with(DoorBlock.OPEN, false).with(HermeticDoorBlock.SEALED, true).with(HermeticDoorBlock.WELDED, true);
                 world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
                 if (otherState.isOf(state.getBlock())) {
@@ -71,12 +76,17 @@ public class GasCutterItem extends Item implements PolymerItem {
                 world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_USE, SoundCategory.BLOCKS, 0.9f, 0.8f);
 
                 if (player != null) {
-                    player.sendMessage(Text.literal("§6[Газовый резак РГ-3]: Швы заварены! Дверь наглухо запечатана от Самосбора."), true);
+                    player.sendMessage(Text.literal("§6[Газовый резак РГ-3]: Швы заварены! Израсходован 1 баллон АЦ-5."), true);
                     stack.damage(1, player, LivingEntity.getSlotForHand(context.getHand()));
                 }
                 return ActionResult.SUCCESS;
             } else {
                 // CUT OPEN
+                if (player != null && !consumeAcetylene(player)) {
+                    player.sendMessage(Text.literal("§c[РГ-3]: Требуется баллон ацетилена АЦ-5 для резки сварного шва!"), true);
+                    return ActionResult.FAIL;
+                }
+
                 BlockState newState = state.with(HermeticDoorBlock.WELDED, false);
                 world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
                 if (otherState.isOf(state.getBlock())) {
@@ -90,7 +100,7 @@ public class GasCutterItem extends Item implements PolymerItem {
                 world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.BLOCKS, 0.8f, 0.9f);
 
                 if (player != null) {
-                    player.sendMessage(Text.literal("§e[Газовый резак РГ-3]: Сварной шов срезан! Гермозатвор разблокирован."), true);
+                    player.sendMessage(Text.literal("§e[Газовый резак РГ-3]: Сварной шов срезан! Израсходован 1 баллон АЦ-5."), true);
                     stack.damage(2, player, LivingEntity.getSlotForHand(context.getHand()));
                 }
                 return ActionResult.SUCCESS;
@@ -121,6 +131,18 @@ public class GasCutterItem extends Item implements PolymerItem {
         }
 
         return ActionResult.PASS;
+    }
+
+    private boolean consumeAcetylene(PlayerEntity player) {
+        if (player.getAbilities().creativeMode) return true;
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack invStack = player.getInventory().getStack(i);
+            if (invStack.isOf(ModItems.ACETYLENE_CANISTER)) {
+                invStack.decrement(1);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

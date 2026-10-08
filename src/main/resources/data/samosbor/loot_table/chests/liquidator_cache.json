@@ -61,6 +61,16 @@
           "type": "minecraft:item",
           "name": "samosbor:jp11_canister",
           "weight": 18
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:acoustic_stethoscope",
+          "weight": 16
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:cassette_tape",
+          "weight": 14
         }
       ]
     }

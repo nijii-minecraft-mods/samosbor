@@ -8,6 +8,7 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.SkullBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -53,6 +54,16 @@ public class RadioReceiverBlock extends Block implements PolymerHeadBlock {
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         if (!world.isClient) {
+            ItemStack held = player.getMainHandStack();
+            if (held.isOf(com.samosbor.item.ModItems.CASSETTE_TAPE)) {
+                world.playSound(null, pos, SoundEvents.BLOCK_LEVER_CLICK, SoundCategory.BLOCKS, 1.0f, 0.7f);
+                world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_CHIME.value(), SoundCategory.BLOCKS, 1.0f, 0.5f);
+                world.playSound(null, pos, SoundEvents.BLOCK_REDSTONE_TORCH_BURNOUT, SoundCategory.BLOCKS, 0.6f, 1.8f);
+                player.sendMessage(Text.literal("§6[ВЭФ-202]: §7Воспроизведение магнитной кассеты через динамик..."), true);
+                held.use(world, player, net.minecraft.util.Hand.MAIN_HAND);
+                return ActionResult.SUCCESS;
+            }
+
             int currentMode = state.get(MODE);
             int nextMode = (currentMode + 1) % 3;
             world.setBlockState(pos, state.with(MODE, nextMode), Block.NOTIFY_LISTENERS);

@@ -15,6 +15,7 @@ public class ModItems {
     public static final Item RATION_TICKET = register("ration_ticket", new SimplePolymerItem(new Item.Settings(), Items.PAPER));
     public static final Item CANNED_STEW = register("canned_stew", new CannedStewItem());
     public static final Item FREEZE_DRIED_BORSCHT = register("freeze_dried_borscht", new FreezeDriedBorschtItem());
+    public static final Item COOKED_BORSCHT = register("cooked_borscht", new CookedBorschtItem());
     public static final Item HARDTACK = register("hardtack", new HardtackItem());
     public static final Item MUSHROOM_MOONSHINE = register("mushroom_moonshine", new MushroomMoonshineItem());
 
@@ -35,6 +36,7 @@ public class ModItems {
     public static final Item GAS_CUTTER = register("gas_cutter", new GasCutterItem());
     public static final Item ACETYLENE_CANISTER = register("acetylene_canister", new AcetyleneCanisterItem());
     public static final Item JP11_CANISTER = register("jp11_canister", new Jp11CanisterItem());
+    public static final Item ACOUSTIC_STETHOSCOPE = register("acoustic_stethoscope", new AcousticStethoscopeItem());
 
     // Weapons, lore archives & tactical gear
     public static final Item SIGNAL_FLARE = register("signal_flare", new SignalFlareItem());
@@ -45,6 +47,7 @@ public class ModItems {
     public static final Item JP11_CARBINE = register("jp11_carbine", new Jp11CarbineItem());
     public static final Item JP11U_COMPONENT = register("jp11u_component", new SimplePolymerItem(new Item.Settings(), Items.HEAVY_CORE));
     public static final Item PARTY_DOSSIER = register("party_dossier", new PartyDossierItem());
+    public static final Item CASSETTE_TAPE = register("cassette_tape", new CassetteTapeItem());
 
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(MOD_ID, name), item);

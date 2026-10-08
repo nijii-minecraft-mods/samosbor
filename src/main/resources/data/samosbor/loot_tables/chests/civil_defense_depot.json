@@ -67,6 +67,16 @@
           "type": "minecraft:item",
           "name": "samosbor:dosimeter",
           "weight": 14
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:acoustic_stethoscope",
+          "weight": 14
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:cassette_tape",
+          "weight": 16
         }
       ]
     }
