@@ -51,6 +51,9 @@ public class SamosborMod implements ModInitializer {
         // Register world tick event for Samosbor cycle
         ServerTickEvents.END_WORLD_TICK.register(SamosborManager::tickWorld);
 
+        // Register Occult Enchantment and Cross-Dimensional hooks
+        com.samosbor.event.OccultEnchantmentHooks.register();
+
         LOGGER.info("Самосбор успешно загружен. Гигахрущёвка готова к заселению.");
     }
 }

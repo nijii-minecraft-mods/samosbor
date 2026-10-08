@@ -1,5 +1,5 @@
 {
-  "parent": "samosbor:weld_hermetic_door",
+  "parent": "samosbor:seal_hermetic_door",
   "display": {
     "icon": {
       "id": "samosbor:emergency_siren"

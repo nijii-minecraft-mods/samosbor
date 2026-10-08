@@ -85,10 +85,15 @@ public class ElevatorStationBlock extends Block implements PolymerBlock {
                 BlockPos landingPos = new BlockPos(targetX, targetY, targetZ);
                 BlockPos returnStationPos = landingPos.south(); // targetZ + 1
 
-                // Ensure safe landing pad and return station
-                targetWorld.setBlockState(landingPos, ModBlocks.P46_PANEL.getDefaultState(), Block.NOTIFY_LISTENERS);
-                targetWorld.setBlockState(landingPos.up(1), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
-                targetWorld.setBlockState(landingPos.up(2), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                // Ensure safe 3x3 landing pad and clearance
+                for (int dx = -1; dx <= 1; dx++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        BlockPos p = landingPos.add(dx, 0, dz);
+                        targetWorld.setBlockState(p, ModBlocks.P46_PANEL.getDefaultState(), Block.NOTIFY_LISTENERS);
+                        targetWorld.setBlockState(p.up(1), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                        targetWorld.setBlockState(p.up(2), Blocks.AIR.getDefaultState(), Block.NOTIFY_LISTENERS);
+                    }
+                }
 
                 // Place return elevator station so player can always go back!
                 targetWorld.setBlockState(returnStationPos, ModBlocks.ELEVATOR_STATION.getDefaultState(), Block.NOTIFY_LISTENERS);

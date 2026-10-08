@@ -649,13 +649,12 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                                            BlockState p46, BlockState painted, BlockState air, BlockState fluorLamp, BlockState emergLamp,
                                            BlockState doorLN, BlockState doorUN, BlockState doorLS, BlockState doorUS,
                                            BlockState doorLE, BlockState doorUE, BlockState doorLW, BlockState doorUW) {
+        // Pass 1: Carve all corridor open space, floor dressings and ceiling lamps
         for (int lx = 0; lx < 16; lx++) {
             for (int lz = 0; lz < 16; lz++) {
                 boolean isCorridorX = (lx == 7 || lx == 8);
                 boolean isCorridorZ = (lz == 7 || lz == 8);
-                boolean isCorridor = isCorridorX || isCorridorZ;
-
-                if (isCorridor) {
+                if (isCorridorX || isCorridorZ) {
                     for (int y = baseY + 1; y < baseY + FLOOR_HEIGHT; y++) {
                         chunk.setBlockState(mutable.set(lx, y, lz), air, false);
                     }
@@ -683,6 +682,15 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                         chunk.setBlockState(mutable.set(lx, baseY + FLOOR_HEIGHT - 1, lz), lamp, false);
                     }
                 }
+            }
+        }
+
+        // Pass 2: Generate corridor boundary walls, doors, chutes, and notices
+        for (int lx = 0; lx < 16; lx++) {
+            for (int lz = 0; lz < 16; lz++) {
+                boolean isCorridorX = (lx == 7 || lx == 8);
+                boolean isCorridorZ = (lz == 7 || lz == 8);
+                boolean isCorridor = isCorridorX || isCorridorZ;
 
                 // Corridor boundary walls and apartment doorways
                 boolean isWallX = (lx == 6 || lx == 9);
@@ -732,7 +740,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                                         case 1 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§1ОБЪЯВЛЕНИЕ", "§0Выдача концентрата", "§008:00 - 10:00", "§0Строго по талонам", DyeColor.BLUE);
                                         case 2 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§4ОПАСНАЯ ЗОНА", "§0Пломба Очистки", "§0Вход воспрещён!", "§0Штраф: распыл", DyeColor.RED);
                                         case 3 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§2ГРАФИК ДЕЖУРСТВ", "§0Мытьё пола: кв.1-4", "§0В мусоропровод", "§0не лезть!", DyeColor.GREEN);
-                                        case 4 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§4ВАЛЕРА ВЫХОДИ", "§0МЫ ЗНАЕМ ЧТО ТАМ", "§0НЕ ВЕРЬ ШЁПОТУ", "§0ОНИ НЕ ТВОЯ СЕМЬЯ", DyeColor.PURPLE);
+                                        case 4 -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§4НЕ ВЕРЬ ШЁПОТУ", "§0Они копируют голос", "§0Дверь не открывать", "§4ДАЖЕ БЛИЗКИМ", DyeColor.PURPLE);
                                         default -> placeWallNotice(chunk, mutable.set(signX, baseY + 2, signZ), facing, "§8СЛАВА ПАРТИИ!", "§0План по бетону 102%", "§0Берегите ГП-5", "§0Сектор жилой", DyeColor.BLACK);
                                     }
                                 }
@@ -978,7 +986,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
             }
         }
 
-        int variant = Math.abs((int) (seed % 34));
+        int variant = Math.abs((int) (seed % 37));
 
         switch (archetype) {
             case RESIDENTIAL -> generateResidentialVariant(chunk, mutable, baseY, floor, variant, minX, maxX, minZ, maxZ, doorX, doorZ, seed);
@@ -1387,7 +1395,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 placeWallNotice(chunk, mutable.set(doorX, baseY + 2, doorZ), Direction.NORTH, "§6[СДВИГ ПЛИТ]", "§0Потолок просел", "§0Пробираться", "§0ползком!", DyeColor.ORANGE);
             }
             case 26 -> {
-                // 27. Valera's Overgrown Lair (Логово Валеры под ванной)
+                // 27. Apex Mimic Breach Nest (Логово Апекс-Мимика в вентиляции)
                 for (int lx = minX; lx <= maxX; lx++) {
                     for (int lz = minZ; lz <= maxZ; lz++) {
                         chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.SCULK.getDefaultState(), false);
@@ -1400,10 +1408,10 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(midX, baseY + 1, midZ + 1), Blocks.SKELETON_SKULL.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), ModBlocks.TOXIC_MUSHROOM.getDefaultState(), false);
                 placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.MIMIC_NEST), seed);
-                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4[ЗАПИСЬ 14]", "§0Валера перерос ванну", "§0Он ушёл в вытяжку", "§4НЕ СМОТРИ НАВЕРХ", DyeColor.RED);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4[РАПОРТ 14]", "§0Существо поглотило", "§0жильцов и ушло", "§4В ВЫТЯЖКУ", DyeColor.RED);
             }
             case 27 -> {
-                // 28. Welded Quarantine Stash (Заваренная гермодверь с ценным схроном)
+                // 28. Welded Quarantine Stash (Заваренная гермодверь Ударного Звена)
                 chunk.setBlockState(mutable.set(doorX, baseY + 1, doorZ), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.LOWER).with(DoorBlock.FACING, Direction.NORTH).with(HermeticDoorBlock.WELDED, true).with(HermeticDoorBlock.SEALED, true), false);
                 chunk.setBlockState(mutable.set(doorX, baseY + 2, doorZ), ModBlocks.HERMETIC_DOOR.getDefaultState().with(DoorBlock.HALF, DoubleBlockHalf.UPPER).with(DoorBlock.FACING, Direction.NORTH).with(HermeticDoorBlock.WELDED, true).with(HermeticDoorBlock.SEALED, true), false);
 
@@ -1416,7 +1424,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.CRYING_OBSIDIAN.getDefaultState(), false);
                 chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.RESPAWN_ANCHOR.getDefaultState(), false);
                 placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.LIQUIDATOR_CACHE), seed);
-                placeWallNotice(chunk, mutable.set(doorX, baseY + 3, doorZ), Direction.NORTH, "§4ОБВАРЕНО СНАРУЖИ", "§0ЛИКВИДАТОР ВАЛЕРА", "§0Карантин Б-2", "§4НЕ ВСКРЫВАТЬ!", DyeColor.RED);
+                placeWallNotice(chunk, mutable.set(doorX, baseY + 3, doorZ), Direction.NORTH, "§4ОБВАРЕНО СНАРУЖИ", "§0ЗВЕНО 4108-Б", "§0Карантин Б-2", "§4НЕ ВСКРЫВАТЬ!", DyeColor.RED);
             }
             case 28 -> {
                 // 29. Bricked-In Survivor Shelter (Замурованное крыло)
@@ -1533,7 +1541,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), ModLootTables.CIVIL_DEFENSE_DEPOT, seed);
                 placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§1СПОРТЗАЛ ГО", "§0Нормы ГТО Сектора", "§0Бег в ОЗК и ГП-5", "§2Отсек 12", DyeColor.BLUE);
             }
-            default -> {
+            case 33 -> {
                 // 34. Biomass Cult Sanctum / Heretical Chapel (Оккультное святилище Культа Биомассы)
                 for (int lx = minX; lx <= maxX; lx++) {
                     for (int lz = minZ; lz <= maxZ; lz++) {
@@ -1560,6 +1568,62 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 // Occult mimic nest loot cache
                 placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), ModLootTables.MIMIC_NEST, seed);
                 placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§4ПЛОТЬ ЕДИНА", "§4С БЕТОНОМ", "§5СВЯТАЯ МЯКОТЬ", "§0Слава Самосбору", DyeColor.RED);
+            }
+            case 34 -> {
+                // 35. Borshchevod Greenhouse Apartment (Оранжерея Староверов-Борщеводов)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.FARMLAND.getDefaultState(), false);
+                    }
+                }
+                // UV Heat lamps on ceiling
+                chunk.setBlockState(mutable.set(midX, baseY + FLOOR_HEIGHT - 1, midZ), ModBlocks.FLUORESCENT_LAMP.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + FLOOR_HEIGHT - 1, minZ + 1), ModBlocks.FLUORESCENT_LAMP.getDefaultState(), false);
+
+                // Thickets of Mutated Borshchevik
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), ModBlocks.MUTATED_BORSHCHEVIK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), ModBlocks.MUTATED_BORSHCHEVIK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX - 1, baseY + 1, midZ), ModBlocks.MUTATED_BORSHCHEVIK.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, maxZ - 1), ModBlocks.MUTATED_BORSHCHEVIK.getDefaultState(), false);
+
+                // Herbalist cauldron and sap barrel
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.CAULDRON.getDefaultState(), false);
+                placeBarrel(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.MIMIC_NEST), seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§2СЕКТА БОРЩЕВОДА", "§0Зонтики созрели", "§0Сбор сока в сумерках", "§4НЕ ВЫХОДИТЬ НА СВЕТ", DyeColor.GREEN);
+            }
+            case 35 -> {
+                // 36. Rusty God Chapel (Храм Ржавого Бога и Чёрного Краза)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        BlockState cu = ((lx + lz) % 2 == 0) ? Blocks.EXPOSED_COPPER.getDefaultState() : Blocks.CUT_COPPER.getDefaultState();
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), cu, false);
+                    }
+                }
+                // Heavy machinery & anvil altar
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CHIPPED_ANVIL.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 2, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX, baseY + 3, midZ), Blocks.CHAIN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX + 1, baseY + 1, midZ), Blocks.HEAVY_CORE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(maxX - 1, baseY + 1, midZ), Blocks.IRON_BLOCK.getDefaultState(), false);
+
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.LIQUIDATOR_CACHE), seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§6РЖАВЫЙ БОГ", "§0Чёрный Краз грядёт", "§0Отвергни плоть —", "§4СТАЛЬ ВЕЧНА", DyeColor.ORANGE);
+            }
+            default -> {
+                // 37. Outer Wall Cartographer Outpost (Аванпост Искателей Выхода)
+                for (int lx = minX; lx <= maxX; lx++) {
+                    for (int lz = minZ; lz <= maxZ; lz++) {
+                        chunk.setBlockState(mutable.set(lx, baseY, lz), Blocks.STRIPPED_SPRUCE_WOOD.getDefaultState(), false);
+                    }
+                }
+                chunk.setBlockState(mutable.set(midX, baseY + 1, midZ), Blocks.CARTOGRAPHY_TABLE.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(midX + 1, baseY + 1, midZ), Blocks.LECTERN.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 2, minZ), Blocks.BOOKSHELF.getDefaultState(), false);
+                chunk.setBlockState(mutable.set(minX, baseY + 1, maxZ), Blocks.TARGET.getDefaultState(), false);
+
+                placeChest(chunk, mutable.set(maxX, baseY + 1, maxZ), getDepthLootTable(floor, ModLootTables.CIVIL_DEFENSE_DEPOT), seed);
+                placeWallNotice(chunk, mutable.set(midX, baseY + 2, minZ), Direction.SOUTH, "§bИСКАТЕЛИ ВЫХОДА", "§0Сектор 104-Юг", "§0Стена существует", "§bМы найдём край!", DyeColor.CYAN);
             }
         }
     }

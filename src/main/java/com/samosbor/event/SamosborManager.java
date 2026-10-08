@@ -37,12 +37,12 @@ public class SamosborManager {
     public static final int DURATION_RECESSION = 400; // 20 sec
 
     private static final String[] MIMIC_WHISPERS = new String[]{
-            "§d[Голос из коридора]: §7Открой дверь... это Валера... здесь холодно...",
-            "§d[Шёпот за дверью]: §7Мама, открой, пожалуйста, я боюсь...",
-            "§d[Хрип за гермозатвором]: §7Ликвидаторы... помогите... оно пробило этаж...",
-            "§d[Голос парторга]: §7Гражданин, немедленно откройте дверь по приказу Администрации!",
-            "§d[Стон за стеной]: §7Впустите... туман уже здесь... я живой...",
-            "§d[Знакомый голос]: §7Это Валера, я детали ЖП-11-У принёс, открой скорее..."
+            "§d[Голос соседа из коридора]: §7Открой дверь... это сосед из 42-й... здесь туман...",
+            "§d[Шёпот за дверью]: §7Мама, открой, пожалуйста, я боюсь... оно ползёт...",
+            "§d[Хрип за гермозатвором]: §7Ликвидаторы... помогите... прорыв на ярусе...",
+            "§d[Голос дежурного]: §7Гражданин, немедленно откройте дверь для зачистки сектора!",
+            "§d[Стон за стеной]: §7Впустите... туман уже здесь... я ещё человек...",
+            "§d[Искажённый голос]: §7Дежурный, открой... я принёс канистру спецраствора..."
     };
 
     public static SamosborPhase getCurrentPhase() {
@@ -267,11 +267,11 @@ public class SamosborManager {
                 int mobRoll = world.random.nextInt(100);
 
                 if (distFromCenter > 45 && mobRoll < 15) {
-                    // 1. APEX MINI-BOSS: Валера / Древний Мимик
+                    // 1. APEX MINI-BOSS: Апекс-Мимик (Реликт Прорыва)
                     ZombieEntity valera = EntityType.ZOMBIE.create(world);
                     if (valera != null) {
                         valera.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
-                        valera.setCustomName(Text.literal("§4§lВалера (Древний Мимик)"));
+                        valera.setCustomName(Text.literal("§4§lАпекс-Мимик (Реликт Прорыва)"));
                         valera.setCustomNameVisible(true);
                         valera.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
                         valera.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE));
@@ -286,7 +286,7 @@ public class SamosborManager {
 
                         world.spawnEntity(valera);
                         world.playSound(null, spawnPos, SoundEvents.ENTITY_WARDEN_ROAR, SoundCategory.HOSTILE, 1.5f, 0.6f);
-                        broadcastMessage(world, Text.literal("§4§l[!] ИЗ ВЕНТШАХТЫ ВЫВАЛИЛСЯ ВАЛЕРА! СТАЛЬНЫЕ КОГТИ СКРЕБУТ ПО БЕТОНУ!"));
+                        broadcastMessage(world, Text.literal("§4§l[!] ИЗ ВЕНТШАХТЫ ВЫРВАЛСЯ АПЕКС-МИМИК! РЕЛИКТ ПРОРЫВА РАЗРЫВАЕТ СТАЛЬ!"));
                     }
                 } else if (mobRoll < 35) {
                     // 2. Сектант Великой Биомассы (Cultist)

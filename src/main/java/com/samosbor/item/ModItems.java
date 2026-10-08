@@ -49,12 +49,26 @@ public class ModItems {
     public static final Item PARTY_DOSSIER = register("party_dossier", new PartyDossierItem());
     public static final Item CASSETTE_TAPE = register("cassette_tape", new CassetteTapeItem());
 
-    // Occult relics, cultist weapons & Valera boss drops
+    // Occult relics, cultist weapons & breach boss drops
     public static final Item BIOMASS_GRIMOIRE = register("biomass_grimoire", new BiomassGrimoireItem());
     public static final Item RITUAL_SICKLE = register("ritual_sickle", new RitualSickleItem());
     public static final Item CULT_TOTEM = register("cult_totem", new CultTotemItem());
     public static final Item BIOMASS_HEART = register("biomass_heart", new BiomassHeartItem());
     public static final Item VALERA_DOGTAG = register("valera_dogtag", new ValeraDogTagItem());
+    public static final Item BORSHCHEVIK_EXTRACT = register("borshchevik_extract", new BorshchevikExtractItem());
+
+    // Samosbor Occult Enchantment Tomes
+    public static final Item OCCULT_TOME_RIFT = register("occult_tome_rift", new OccultTomeItem(OccultTomeItem.TomeType.RIFT_BREACH));
+    public static final Item OCCULT_TOME_BIOMASS = register("occult_tome_biomass", new OccultTomeItem(OccultTomeItem.TomeType.BIOMASS_CONTAGION));
+    public static final Item OCCULT_TOME_CONCRETE = register("occult_tome_concrete", new OccultTomeItem(OccultTomeItem.TomeType.CONCRETE_TRANSMUTATION));
+    public static final Item OCCULT_TOME_BORSHCHEVIK = register("occult_tome_borshchevik", new OccultTomeItem(OccultTomeItem.TomeType.BORSHCHEVIK_POISON));
+
+    // Party Nomenklatura High-Level / Over-leveled Directives (Level X - XIII)
+    public static final Item PARTY_TOME_SHARPNESS = register("party_tome_sharpness", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_SHARPNESS));
+    public static final Item PARTY_TOME_LOOTING = register("party_tome_looting", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_LOOTING));
+    public static final Item PARTY_TOME_EFFICIENCY = register("party_tome_efficiency", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_EFFICIENCY));
+    public static final Item PARTY_TOME_UNBREAKING = register("party_tome_unbreaking", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_UNBREAKING));
+    public static final Item PARTY_TOME_PROTECTION = register("party_tome_protection", new OccultTomeItem(OccultTomeItem.TomeType.PARTY_PROTECTION));
 
     private static Item register(String name, Item item) {
         return Registry.register(Registries.ITEM, Identifier.of(MOD_ID, name), item);

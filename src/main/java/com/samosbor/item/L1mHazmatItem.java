@@ -4,7 +4,8 @@ import eu.pb4.polymer.core.api.item.PolymerItem;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.Equipment;
+import net.minecraft.item.ArmorItem;
+import net.minecraft.item.ArmorMaterials;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -14,10 +15,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class L1mHazmatItem extends Item implements PolymerItem, Equipment {
+public class L1mHazmatItem extends ArmorItem implements PolymerItem {
 
     public L1mHazmatItem() {
-        super(new Item.Settings().maxDamage(600));
+        super(ArmorMaterials.NETHERITE, ArmorItem.Type.CHESTPLATE, new Item.Settings().maxDamage(600));
     }
 
     @Override

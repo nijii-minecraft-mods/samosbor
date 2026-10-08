@@ -53,6 +53,7 @@ public class FlamethrowerItem extends Item implements PolymerItem {
 
             world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
             stack.damage(1, user, LivingEntity.getSlotForHand(hand));
+            user.getItemCooldownManager().set(this, 10);
         }
 
         return TypedActionResult.success(stack);

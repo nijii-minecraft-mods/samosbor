@@ -129,6 +129,14 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
                 .with(POWERED, state.get(POWERED));
     }
 
+    @Override
+    protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, BlockPos sourcePos, boolean notify) {
+        if (state.get(WELDED) || state.get(SEALED)) {
+            return;
+        }
+        super.neighborUpdate(state, world, pos, sourceBlock, sourcePos, notify);
+    }
+
     public static boolean isSealedAt(World world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         if (state.getBlock() instanceof HermeticDoorBlock) {

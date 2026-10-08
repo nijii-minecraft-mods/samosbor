@@ -23,6 +23,7 @@ public class ModBlocks {
     public static final Block ELEVATOR_STATION = register("elevator_station", new ElevatorStationBlock(), Items.LODESTONE);
     public static final Block BIOMASS = register("biomass", new BiomassBlock(), Items.NETHER_WART_BLOCK);
     public static final Block TOXIC_MUSHROOM = register("toxic_mushroom", new ToxicMushroomBlock(TreeConfiguredFeatures.HUGE_RED_MUSHROOM), Items.RED_MUSHROOM);
+    public static final Block MUTATED_BORSHCHEVIK = register("mutated_borshchevik", new MutatedBorshchevikBlock(), Items.SWEET_BERRIES);
 
     // Domestic & Soviet furniture blocks (Polymer 3D Heads)
     public static final Block WALL_CARPET = register("wall_carpet", new WallCarpetBlock(), Items.RED_GLAZED_TERRACOTTA);

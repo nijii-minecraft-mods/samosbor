@@ -26,12 +26,12 @@ public class ValeraDogTagItem extends Item implements PolymerItem {
     @Override
     public ItemStack getPolymerItemStack(ItemStack itemStack, net.minecraft.item.tooltip.TooltipType tooltipType, net.minecraft.registry.RegistryWrapper.WrapperLookup lookup, @Nullable ServerPlayerEntity player) {
         ItemStack out = PolymerItem.super.getPolymerItemStack(itemStack, tooltipType, lookup, player);
-        out.set(DataComponentTypes.CUSTOM_NAME, Text.literal("§6Именной жетон Ликвидатора: ВАЛЕРА"));
+        out.set(DataComponentTypes.CUSTOM_NAME, Text.literal("§cОплавленный жетон: Ликвидатор Прорыва"));
         out.set(DataComponentTypes.LORE, new LoreComponent(List.of(
-                Text.literal("§7Оплавленный стальной жетон бойца Очистного Звена 04-Б."),
-                Text.literal("§c«СТ. ЛЕЙТЕНАНТ В. В. КУЗНЕЦОВ (ВАЛЕРА)»"),
-                Text.literal("§4«СТАТУС: МУТИРОВАЛ ПРИ ПРОРЫВЕ БИОМАССЫ»"),
-                Text.literal("§8Легендарный артефакт павшего героя Гигахруща.")
+                Text.literal("§7Оплавленный стальной жетон бойца Ударного Звена Зачистки."),
+                Text.literal("§c«ЖЕТОН ЛИКВИДАТОРА № 4108-Б / СЕКТОР ГХА-304»"),
+                Text.literal("§4«СТАТУС: ПОГЛОЩЁН АПЕКС-МИМИКОМ ПРИ ПРОРЫВЕ БИОМАССЫ»"),
+                Text.literal("§8Трофей победы над древним Реликтом Прорыва.")
         )));
         return out;
     }

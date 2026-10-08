@@ -1,17 +1,24 @@
 package com.samosbor.block;
 
+import com.samosbor.enchantment.OccultEnchantmentHelper;
 import com.samosbor.item.ModItems;
+import com.samosbor.item.OccultTomeItem;
+import com.samosbor.util.RomanNumeralUtil;
 import eu.pb4.polymer.core.api.block.PolymerHeadBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.SkullBlock;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -61,7 +68,59 @@ public class CultAltarBlock extends Block implements PolymerHeadBlock {
                 return ActionResult.SUCCESS;
             }
 
-            // 2. Sacrificial food offering
+            // 2. Occult & Party Infusion Ritual (Tool in Mainhand + Occult Tome in Offhand)
+            ItemStack offhand = player.getOffHandStack();
+            if (!held.isEmpty() && !offhand.isEmpty() && offhand.getItem() instanceof OccultTomeItem tome) {
+                OccultTomeItem.TomeType tomeType = tome.getTomeType();
+
+                if (tomeType.isVanillaEnchantment()) {
+                    RegistryKey<Enchantment> enchKey = switch (tomeType.id) {
+                        case "sharpness" -> Enchantments.SHARPNESS;
+                        case "looting" -> Enchantments.LOOTING;
+                        case "efficiency" -> Enchantments.EFFICIENCY;
+                        case "unbreaking" -> Enchantments.UNBREAKING;
+                        case "protection" -> Enchantments.PROTECTION;
+                        default -> null;
+                    };
+
+                    if (enchKey != null) {
+                        net.minecraft.registry.Registry<Enchantment> enchRegistry = serverWorld.getRegistryManager().get(RegistryKeys.ENCHANTMENT);
+                        var enchEntry = enchRegistry.getEntry(enchKey).orElse(null);
+                        if (enchEntry != null) {
+                            held.addEnchantment(enchEntry, tomeType.level);
+                            offhand.decrement(1);
+                            player.damage(serverWorld.getDamageSources().magic(), 4.0f);
+
+                        serverWorld.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1.2f, 0.7f);
+                        serverWorld.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS, 1.5f, 0.8f);
+                        serverWorld.spawnParticles(ParticleTypes.SCULK_SOUL, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 25, 0.3, 0.4, 0.3, 0.05);
+
+                        player.sendMessage(Text.literal(String.format("§4[Партийный Ритуал]: §cДиректива Парткома впечатана в снаряжение! Уровень: %s", RomanNumeralUtil.toRoman(tomeType.level))), true);
+                        return ActionResult.SUCCESS;
+                    }
+                }
+            } else {
+                    if (OccultEnchantmentHelper.canApply(tomeType.id, held)) {
+                        OccultEnchantmentHelper.applyOccultEnchantment(held, tomeType.id, tomeType.level);
+                        offhand.decrement(1);
+                        player.damage(serverWorld.getDamageSources().magic(), 4.0f);
+
+                        serverWorld.playSound(null, pos, SoundEvents.ENTITY_WARDEN_HEARTBEAT, SoundCategory.BLOCKS, 1.3f, 0.7f);
+                        serverWorld.playSound(null, pos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.BLOCKS, 1.2f, 0.6f);
+                        serverWorld.playSound(null, pos, SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.BLOCKS, 1.5f, 0.8f);
+                        serverWorld.spawnParticles(ParticleTypes.CRIMSON_SPORE, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 30, 0.4, 0.4, 0.4, 0.1);
+                        serverWorld.spawnParticles(ParticleTypes.PORTAL, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, 20, 0.3, 0.3, 0.3, 0.1);
+
+                        player.sendMessage(Text.literal(String.format("§5[Кровавый Ритуал]: §dКровь впиталась в алтарь! «%s» впечатано в инструмент!", OccultEnchantmentHelper.getDisplayName(tomeType.id, tomeType.level))), true);
+                        return ActionResult.SUCCESS;
+                    } else {
+                        player.sendMessage(Text.literal("§c[Алтарь отвергает жертву]: Этот фолиант несовместим с данным инструментом!"), true);
+                        return ActionResult.FAIL;
+                    }
+                }
+            }
+
+            // 3. Sacrificial food offering
             if (held.isOf(ModItems.FOOD_CONCENTRATE) || held.isOf(ModItems.CANNED_STEW) || held.isOf(Items.ROTTEN_FLESH)) {
                 held.decrement(1);
                 serverWorld.playSound(null, pos, SoundEvents.ENTITY_GENERIC_EAT, SoundCategory.BLOCKS, 1.0f, 0.5f);
@@ -73,7 +132,7 @@ public class CultAltarBlock extends Block implements PolymerHeadBlock {
                 return ActionResult.SUCCESS;
             }
 
-            // 3. Ambient whisper
+            // 4. Ambient whisper
             player.sendMessage(Text.literal("§7[Алтарь тихо пульсирует. Из стыков костей веет озоном и сырым мясом.]"), false);
             serverWorld.playSound(null, pos, SoundEvents.ENTITY_WARDEN_HEARTBEAT, SoundCategory.BLOCKS, 1.0f, 0.9f);
         }

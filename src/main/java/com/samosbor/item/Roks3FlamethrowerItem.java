@@ -71,6 +71,7 @@ public class Roks3FlamethrowerItem extends Item implements PolymerItem {
             world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ENTITY_BLAZE_SHOOT, SoundCategory.PLAYERS, 1.2f, 0.7f);
             world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.ITEM_FIRECHARGE_USE, SoundCategory.PLAYERS, 1.0f, 0.6f);
             stack.damage(1, user, LivingEntity.getSlotForHand(hand));
+            user.getItemCooldownManager().set(this, 16);
         }
 
         return TypedActionResult.success(stack);

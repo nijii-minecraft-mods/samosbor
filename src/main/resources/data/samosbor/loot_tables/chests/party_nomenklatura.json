@@ -71,6 +71,36 @@
           "type": "minecraft:item",
           "name": "samosbor:cassette_tape",
           "weight": 18
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:party_tome_sharpness",
+          "weight": 14
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:party_tome_looting",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:party_tome_efficiency",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:party_tome_unbreaking",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:party_tome_protection",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:occult_tome_concrete",
+          "weight": 12
         }
       ]
     }

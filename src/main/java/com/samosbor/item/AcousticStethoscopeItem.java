@@ -79,7 +79,6 @@ public class AcousticStethoscopeItem extends Item implements PolymerItem {
                 player.sendMessage(Text.literal("§4[СТ-4]: Слышно влажное хлюпанье и копошение биомассы за преградой..."), true);
                 stack.damage(1, player, LivingEntity.getSlotForHand(context.getHand()));
             }
-            return ActionResult.SUCCESS;
         } else if (SamosborManager.isSamosborActive()) {
             world.playSound(null, clickedPos, SoundEvents.AMBIENT_CAVE.value(), SoundCategory.PLAYERS, 1.0f, 0.5f);
             world.playSound(null, clickedPos, SoundEvents.BLOCK_RESPAWN_ANCHOR_CHARGE, SoundCategory.PLAYERS, 0.7f, 0.4f);
@@ -87,7 +86,6 @@ public class AcousticStethoscopeItem extends Item implements PolymerItem {
                 player.sendMessage(Text.literal("§c[СТ-4]: Слышен нарастающий инфразвуковой гул мегаструктуры!"), true);
                 stack.damage(1, player, LivingEntity.getSlotForHand(context.getHand()));
             }
-            return ActionResult.SUCCESS;
         } else if (machineryNearby) {
             world.playSound(null, clickedPos, SoundEvents.BLOCK_CHAIN_STEP, SoundCategory.PLAYERS, 0.9f, 0.9f);
             world.playSound(null, clickedPos, SoundEvents.BLOCK_PISTON_EXTEND, SoundCategory.PLAYERS, 0.7f, 0.6f);
@@ -95,7 +93,6 @@ public class AcousticStethoscopeItem extends Item implements PolymerItem {
                 player.sendMessage(Text.literal("§7[СТ-4]: Слышен натяг стальных тросов и ритмичная вибрация шахты."), true);
                 stack.damage(1, player, LivingEntity.getSlotForHand(context.getHand()));
             }
-            return ActionResult.SUCCESS;
         } else {
             world.playSound(null, clickedPos, SoundEvents.BLOCK_TRIPWIRE_CLICK_ON, SoundCategory.PLAYERS, 0.6f, 1.8f);
             if (player != null) {
