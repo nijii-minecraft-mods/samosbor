@@ -6,9 +6,9 @@ public class GigakhrushchLayout {
     public static final int MAX_HEIGHT = 1024;
     public static final int TOTAL_FLOORS = MAX_HEIGHT / FLOOR_HEIGHT; // ~170 floors
 
-    // Variable stair tier boundaries with procedural flight spans between 13 and 23 floors:
-    // Spans: 15, 21, 13, 18, 23, 16, 19, 14, 22, 8
-    public static final int[] TIER_BOUNDARIES = {1, 16, 37, 50, 68, 91, 107, 126, 140, 162, 170};
+    // Variable stair tier boundaries with short flights (2 to 7 floors) and medium flights (13 to 21 floors):
+    // Spans: 3, 18, 4, 17, 5, 21, 2, 14, 6, 18, 3, 19, 7, 19, 4, 9
+    public static final int[] TIER_BOUNDARIES = {1, 4, 22, 26, 43, 48, 69, 71, 85, 91, 109, 112, 131, 138, 157, 161, 170};
 
     public enum FloorArchetype {
         RESIDENTIAL,
@@ -17,6 +17,46 @@ public class GigakhrushchLayout {
         ADMINISTRATION,
         FLOODED_TECHNICAL,
         PURGED
+    }
+
+    public enum FloorZone {
+        DEEP_FOUNDATIONS(1, 35, "Глубинный фундамент и дренаж"),
+        LOWER_INDUSTRIAL(36, 70, "Нижний промышленный сектор"),
+        CENTRAL_HABITATION(71, 100, "Центральный жилой сектор (Точка входа)"),
+        UPPER_RESEARCH(101, 135, "Верхний научный сектор НИИ"),
+        PARTY_STRATUM(136, 170, "Стратум номенклатуры и парткома");
+
+        private final int minFloor;
+        private final int maxFloor;
+        private final String title;
+
+        FloorZone(int minFloor, int maxFloor, String title) {
+            this.minFloor = minFloor;
+            this.maxFloor = maxFloor;
+            this.title = title;
+        }
+
+        public int getMinFloor() { return minFloor; }
+        public int getMaxFloor() { return maxFloor; }
+        public String getTitle() { return title; }
+    }
+
+    public static FloorZone getFloorZone(int floor) {
+        if (floor <= 35) return FloorZone.DEEP_FOUNDATIONS;
+        if (floor <= 70) return FloorZone.LOWER_INDUSTRIAL;
+        if (floor <= 100) return FloorZone.CENTRAL_HABITATION;
+        if (floor <= 135) return FloorZone.UPPER_RESEARCH;
+        return FloorZone.PARTY_STRATUM;
+    }
+
+    public static int getFlightSpan(int tier) {
+        if (tier < 0 || tier >= TIER_BOUNDARIES.length - 1) return 0;
+        return TIER_BOUNDARIES[tier + 1] - TIER_BOUNDARIES[tier];
+    }
+
+    public static boolean isShortFlight(int tier) {
+        int span = getFlightSpan(tier);
+        return span >= 2 && span <= 7;
     }
 
     public enum CourtyardType {

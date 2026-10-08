@@ -27,8 +27,8 @@ public class ModBlocks {
 
     // Domestic & Soviet furniture blocks
     public static final Block WALL_CARPET = register("wall_carpet", new WallCarpetBlock(), Items.RED_GLAZED_TERRACOTTA);
-    public static final Block OLD_TV = register("old_tv", new OldTvBlock(), Items.NOTE_BLOCK);
-    public static final Block RADIO_RECEIVER = register("radio_receiver", new RadioReceiverBlock(), Items.JUKEBOX);
+    public static final Block OLD_TV = registerHead("old_tv", new OldTvBlock());
+    public static final Block RADIO_RECEIVER = registerHead("radio_receiver", new RadioReceiverBlock());
     public static final Block CAST_IRON_RADIATOR = register("cast_iron_radiator", new CastIronRadiatorBlock(), Items.ANVIL);
     public static final Block GAS_STOVE = register("gas_stove", new GasStoveBlock(), Items.SMOKER);
     public static final Block RUSTY_SINK = register("rusty_sink", new RustySinkBlock(), Items.CAULDRON);
@@ -42,6 +42,13 @@ public class ModBlocks {
         Identifier id = Identifier.of(MOD_ID, name);
         Registry.register(Registries.BLOCK, id, block);
         Registry.register(Registries.ITEM, id, new PolymerBlockItem(block, new Item.Settings(), vanillaItem));
+        return block;
+    }
+
+    private static <T extends Block & eu.pb4.polymer.core.api.block.PolymerHeadBlock> Block registerHead(String name, T block) {
+        Identifier id = Identifier.of(MOD_ID, name);
+        Registry.register(Registries.BLOCK, id, block);
+        Registry.register(Registries.ITEM, id, new eu.pb4.polymer.core.api.item.PolymerHeadBlockItem(block, new Item.Settings()));
         return block;
     }
 

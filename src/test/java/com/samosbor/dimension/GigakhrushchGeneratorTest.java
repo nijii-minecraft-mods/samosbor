@@ -12,17 +12,41 @@ public class GigakhrushchGeneratorTest {
     @Test
     public void testStairTierBoundariesAndVariableHeights() {
         int[] boundaries = GigakhrushchLayout.TIER_BOUNDARIES;
-        assertTrue(boundaries.length >= 10, "Should have at least 10 tier boundaries");
+        assertTrue(boundaries.length >= 12, "Should have at least 12 tier boundaries");
         assertEquals(1, boundaries[0], "First tier must begin at Floor 1");
         assertEquals(GigakhrushchLayout.TOTAL_FLOORS, boundaries[boundaries.length - 1], "Last tier must reach TOTAL_FLOORS");
 
+        boolean hasShortFlight = false;
+        boolean hasMediumFlight = false;
+
         for (int i = 0; i < boundaries.length - 1; i++) {
-            int span = boundaries[i + 1] - boundaries[i];
-            if (i < boundaries.length - 2) {
-                assertTrue(span >= 13 && span <= 23,
-                        "Intermediate tier flight span must be variable between 13 and 23 floors (got " + span + " for tier " + i + ")");
+            int span = GigakhrushchLayout.getFlightSpan(i);
+            if (GigakhrushchLayout.isShortFlight(i)) {
+                hasShortFlight = true;
+                assertTrue(span >= 2 && span <= 7, "Short flight span must be between 2 and 7 floors");
+            } else {
+                hasMediumFlight = true;
+                assertTrue(span >= 8 && span <= 23, "Medium flight span must be between 8 and 23 floors");
             }
         }
+
+        assertTrue(hasShortFlight, "Must generate short flights of 2-7 floors");
+        assertTrue(hasMediumFlight, "Must generate medium flights");
+    }
+
+    @Test
+    public void testFloorZonesAndProgression() {
+        assertEquals(GigakhrushchLayout.FloorZone.DEEP_FOUNDATIONS, GigakhrushchLayout.getFloorZone(1));
+        assertEquals(GigakhrushchLayout.FloorZone.DEEP_FOUNDATIONS, GigakhrushchLayout.getFloorZone(35));
+        assertEquals(GigakhrushchLayout.FloorZone.LOWER_INDUSTRIAL, GigakhrushchLayout.getFloorZone(36));
+        assertEquals(GigakhrushchLayout.FloorZone.LOWER_INDUSTRIAL, GigakhrushchLayout.getFloorZone(70));
+        assertEquals(GigakhrushchLayout.FloorZone.CENTRAL_HABITATION, GigakhrushchLayout.getFloorZone(71));
+        assertEquals(GigakhrushchLayout.FloorZone.CENTRAL_HABITATION, GigakhrushchLayout.getFloorZone(85)); // Middle spawn floor!
+        assertEquals(GigakhrushchLayout.FloorZone.CENTRAL_HABITATION, GigakhrushchLayout.getFloorZone(100));
+        assertEquals(GigakhrushchLayout.FloorZone.UPPER_RESEARCH, GigakhrushchLayout.getFloorZone(101));
+        assertEquals(GigakhrushchLayout.FloorZone.UPPER_RESEARCH, GigakhrushchLayout.getFloorZone(135));
+        assertEquals(GigakhrushchLayout.FloorZone.PARTY_STRATUM, GigakhrushchLayout.getFloorZone(136));
+        assertEquals(GigakhrushchLayout.FloorZone.PARTY_STRATUM, GigakhrushchLayout.getFloorZone(170));
     }
 
     @Test

@@ -21,6 +21,7 @@ import net.minecraft.world.World;
 
 public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
     public static final BooleanProperty SEALED = BooleanProperty.of("sealed");
+    public static final BooleanProperty WELDED = BooleanProperty.of("welded");
 
     public HermeticDoorBlock() {
         super(BlockSetType.IRON, AbstractBlock.Settings.copy(Blocks.IRON_DOOR).strength(6.0f, 1200.0f));
@@ -30,13 +31,14 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
                 .with(HINGE, net.minecraft.block.enums.DoorHinge.LEFT)
                 .with(POWERED, false)
                 .with(HALF, DoubleBlockHalf.LOWER)
-                .with(SEALED, false));
+                .with(SEALED, false)
+                .with(WELDED, false));
     }
 
     @Override
     protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
         super.appendProperties(builder);
-        builder.add(SEALED);
+        builder.add(SEALED, WELDED);
     }
 
     @Override
@@ -44,8 +46,17 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
         if (!world.isClient) {
             boolean isOpen = state.get(OPEN);
             boolean isSealed = state.get(SEALED);
+            boolean isWelded = state.get(WELDED);
             BlockPos otherHalfPos = state.get(HALF) == DoubleBlockHalf.LOWER ? pos.up() : pos.down();
             BlockState otherState = world.getBlockState(otherHalfPos);
+
+            // Welded doors CANNOT be operated by hand
+            if (isWelded) {
+                world.playSound(null, pos, SoundEvents.BLOCK_ANVIL_PLACE, SoundCategory.BLOCKS, 0.9f, 0.5f);
+                world.playSound(null, pos, SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.BLOCKS, 0.6f, 1.6f);
+                player.sendMessage(Text.literal("§c[!] Гермозатвор наглухо заварен автогеном! Срежьте шов Газовым резаком."), true);
+                return ActionResult.SUCCESS;
+            }
 
             // Shift+Right Click: Toggle sealing valve (Вентиль герметизации)
             if (player.isSneaking()) {
@@ -119,7 +130,7 @@ public class HermeticDoorBlock extends DoorBlock implements PolymerBlock {
     public static boolean isSealedAt(World world, BlockPos pos) {
         BlockState state = world.getBlockState(pos);
         if (state.getBlock() instanceof HermeticDoorBlock) {
-            return !state.get(OPEN) && state.get(SEALED);
+            return !state.get(OPEN) && (state.get(SEALED) || state.get(WELDED));
         }
         return false;
     }

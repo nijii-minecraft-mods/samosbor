@@ -73,7 +73,8 @@ public class ElevatorStationBlock extends Block implements PolymerBlock {
                 int chunkOriginZ = Math.floorDiv(pos.getZ(), 16) * 16;
                 int targetX = chunkOriginX + 7;
                 int targetZ = chunkOriginZ + 7;
-                int targetY = 66; // Floor 11 corridor floor
+                int targetFloor = 85; // Dead middle of 1024m height (Y = 510)
+                int targetY = targetFloor * com.samosbor.dimension.GigakhrushchLayout.FLOOR_HEIGHT;
 
                 BlockPos landingPos = new BlockPos(targetX, targetY, targetZ);
                 BlockPos returnStationPos = landingPos.south(); // targetZ + 1
@@ -90,7 +91,7 @@ public class ElevatorStationBlock extends Block implements PolymerBlock {
                 targetWorld.setBlockState(returnStationPos.up(3), ModBlocks.FLUORESCENT_LAMP.getDefaultState(), Block.NOTIFY_LISTENERS);
 
                 serverPlayer.teleport(targetWorld, targetX + 0.5, targetY + 1.0, targetZ + 0.5, serverPlayer.getYaw(), serverPlayer.getPitch());
-                serverPlayer.sendMessage(Text.literal("§e[ЛИФТ]: Добро пожаловать в Гигахрущёвку. Этаж 11 (Коридор Сектора)."), true);
+                serverPlayer.sendMessage(Text.literal("§e[ЛИФТ]: Спуск завершён. Добро пожаловать на Этаж 85 (Центральный жилой сектор, отметка 510м)."), true);
             }
         }
     }

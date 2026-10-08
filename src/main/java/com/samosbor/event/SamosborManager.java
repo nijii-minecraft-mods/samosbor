@@ -74,10 +74,32 @@ public class SamosborManager {
             case PEAK -> tickPeak(world, players);
             case RECESSION -> tickRecession(world, players);
             case CALM -> {
-                // Occasional atmospheric creaks
-                if (world.random.nextInt(1200) == 0) {
+                // Occasional atmospheric creaks and distant structural groans
+                if (world.random.nextInt(400) == 0) {
+                    float pitch = 0.2f + world.random.nextFloat() * 0.2f;
                     for (ServerPlayerEntity player : players) {
-                        world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.AMBIENT_CAVE.value(), SoundCategory.AMBIENT, 0.5f, 0.5f);
+                        if (world.random.nextBoolean()) {
+                            world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_ANVIL_LAND, SoundCategory.AMBIENT, 0.4f, pitch);
+                        } else {
+                            world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_HEAVY_CORE_FALL, SoundCategory.AMBIENT, 0.5f, 0.4f);
+                        }
+                    }
+                }
+
+                // Geiger counter clicks near biomass blocks
+                for (ServerPlayerEntity player : players) {
+                    if (world.random.nextInt(8) == 0) {
+                        BlockPos pPos = player.getBlockPos();
+                        for (int dx = -5; dx <= 5; dx += 2) {
+                            for (int dy = -2; dy <= 2; dy++) {
+                                for (int dz = -5; dz <= 5; dz += 2) {
+                                    if (world.getBlockState(pPos.add(dx, dy, dz)).isOf(com.samosbor.block.ModBlocks.BIOMASS)) {
+                                        world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_TRIPWIRE_CLICK_ON, SoundCategory.PLAYERS, 0.5f, 1.9f + world.random.nextFloat() * 0.1f);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -206,20 +228,46 @@ public class SamosborManager {
             }
         }
 
-        // Spawn hostile Mimic entities in corridors
-        if (world.random.nextInt(300) == 0 && players.size() > 0) {
+        // Spawn hostile Mimic entities in corridors with depth scaling
+        if (world.random.nextInt(250) == 0 && !players.isEmpty()) {
             ServerPlayerEntity targetPlayer = players.get(world.random.nextInt(players.size()));
             BlockPos spawnPos = targetPlayer.getBlockPos().add(world.random.nextInt(10) - 5, 0, world.random.nextInt(10) - 5);
             if (world.getBlockState(spawnPos).isAir()) {
                 ZombieEntity mimic = EntityType.ZOMBIE.create(world);
                 if (mimic != null) {
                     mimic.refreshPositionAndAngles(spawnPos.getX() + 0.5, spawnPos.getY(), spawnPos.getZ() + 0.5, 0, 0);
-                    mimic.setCustomName(Text.literal("§dМимик (Порождение Самосбора)"));
-                    mimic.setCustomNameVisible(true);
-                    mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
-                    mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
-                    mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1200, 1));
-                    mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1200, 1));
+
+                    int playerFloor = (int) (targetPlayer.getY() / com.samosbor.dimension.GigakhrushchLayout.FLOOR_HEIGHT);
+                    int distFromCenter = Math.abs(playerFloor - 85);
+
+                    if (distFromCenter > 45) {
+                        // Elite Deep Foundations / Party Stratum Armored Mimic
+                        mimic.setCustomName(Text.literal("§4Бронированный Мимик Глубин"));
+                        mimic.setCustomNameVisible(true);
+                        mimic.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.NETHERITE_HELMET));
+                        mimic.equipStack(EquipmentSlot.CHEST, new ItemStack(net.minecraft.item.Items.DIAMOND_CHESTPLATE));
+                        mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.ROKS3_FLAMETHROWER));
+                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.20f);
+                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 2400, 2));
+                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 2400, 2));
+                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, 2400, 1));
+                    } else if (distFromCenter > 20) {
+                        // Intermediate Industrial / Research Mimic
+                        mimic.setCustomName(Text.literal("§cМутировавший Мимик Сектора"));
+                        mimic.setCustomNameVisible(true);
+                        mimic.equipStack(EquipmentSlot.HEAD, new ItemStack(net.minecraft.item.Items.IRON_HELMET));
+                        mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
+                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.40f);
+                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1800, 1));
+                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.STRENGTH, 1800, 1));
+                    } else {
+                        // Standard Habitation Mimic
+                        mimic.setCustomName(Text.literal("§dМимик (Порождение Самосбора)"));
+                        mimic.setCustomNameVisible(true);
+                        mimic.equipStack(EquipmentSlot.MAINHAND, new ItemStack(ModItems.CROWBAR));
+                        mimic.setEquipmentDropChance(EquipmentSlot.MAINHAND, 0.35f);
+                        mimic.addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, 1200, 0));
+                    }
                     world.spawnEntity(mimic);
                 }
             }
@@ -234,9 +282,10 @@ public class SamosborManager {
     }
 
     public static boolean isPlayerSafe(ServerWorld world, ServerPlayerEntity player) {
-        // 1. Gas mask protects against toxic fog
+        // 1. Gas mask or L-1M Hazmat suit protects against toxic fog
         ItemStack helmet = player.getEquippedStack(EquipmentSlot.HEAD);
-        if (helmet.isOf(ModItems.GAS_MASK)) {
+        ItemStack chest = player.getEquippedStack(EquipmentSlot.CHEST);
+        if (helmet.isOf(ModItems.GAS_MASK) || chest.isOf(ModItems.L1M_SUIT)) {
             return true;
         }
 
