@@ -310,13 +310,6 @@ public class KhrushchyovkaFeature extends Feature<DefaultFeatureConfig> {
     }
 
     private void setSignSafely(StructureWorldAccess world, BlockPos pos, SignText text) {
-        if (world.getBlockEntity(pos) instanceof SignBlockEntity sign) {
-            try {
-                sign.setWorld(world.toServerWorld());
-                sign.setText(text, true);
-            } catch (Throwable t) {
-                // Silently ignore during worldgen decoration
-            }
-        }
+        // No-op during chunk generation to prevent worldgen thread deadlocks
     }
 }
