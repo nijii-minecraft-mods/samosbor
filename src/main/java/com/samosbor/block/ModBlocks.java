@@ -21,16 +21,19 @@ public class ModBlocks {
     public static final Block EMERGENCY_LAMP = register("emergency_lamp", new EmergencyLampBlock(), Items.REDSTONE_LAMP);
     public static final Block FLUORESCENT_LAMP = register("fluorescent_lamp", new SimplePolymerBlock(AbstractBlock.Settings.copy(Blocks.SEA_LANTERN), Blocks.SEA_LANTERN), Items.SEA_LANTERN);
     public static final Block ELEVATOR_STATION = register("elevator_station", new ElevatorStationBlock(), Items.LODESTONE);
-    public static final Block FOOD_DISPENSER = register("food_dispenser", new FoodDispenserBlock(), Items.DISPENSER);
     public static final Block BIOMASS = register("biomass", new BiomassBlock(), Items.NETHER_WART_BLOCK);
     public static final Block TOXIC_MUSHROOM = register("toxic_mushroom", new ToxicMushroomBlock(TreeConfiguredFeatures.HUGE_RED_MUSHROOM), Items.RED_MUSHROOM);
 
-    // Domestic & Soviet furniture blocks
+    // Domestic & Soviet furniture blocks (Polymer 3D Heads)
     public static final Block WALL_CARPET = register("wall_carpet", new WallCarpetBlock(), Items.RED_GLAZED_TERRACOTTA);
     public static final Block OLD_TV = registerHead("old_tv", new OldTvBlock());
     public static final Block RADIO_RECEIVER = registerHead("radio_receiver", new RadioReceiverBlock());
-    public static final Block CAST_IRON_RADIATOR = register("cast_iron_radiator", new CastIronRadiatorBlock(), Items.ANVIL);
-    public static final Block GAS_STOVE = register("gas_stove", new GasStoveBlock(), Items.SMOKER);
+    public static final Block CAST_IRON_RADIATOR = registerHead("cast_iron_radiator", new CastIronRadiatorBlock());
+    public static final Block GAS_STOVE = registerHead("gas_stove", new GasStoveBlock());
+    public static final Block FOOD_DISPENSER = registerHead("food_dispenser", new FoodDispenserBlock());
+    public static final Block NOTICE_BOARD = registerHead("notice_board", new NoticeBoardBlock());
+    public static final Block MEDKIT_BOX = registerHead("medkit_box", new MedkitBoxBlock());
+    public static final Block EMERGENCY_SIREN = registerHead("emergency_siren", new EmergencySirenBlock());
     public static final Block RUSTY_SINK = register("rusty_sink", new RustySinkBlock(), Items.CAULDRON);
     public static final Block GARBAGE_CHUTE = register("garbage_chute", new GarbageChuteBlock(), Items.HOPPER);
 

@@ -1,0 +1,73 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "min": 4,
+        "max": 8
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:jp11_carbine",
+          "weight": 18
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:jp11u_component",
+          "weight": 22
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:roks3_flamethrower",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:l1m_suit",
+          "weight": 20
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:ai2_medkit",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:canned_stew",
+          "weight": 30,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 6 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:gold_ingot",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 8 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:diamond",
+          "weight": 18,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:netherite_scrap",
+          "weight": 10,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:enchanted_golden_apple",
+          "weight": 5
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:party_dossier",
+          "weight": 25
+        }
+      ]
+    }
+  ]
+}

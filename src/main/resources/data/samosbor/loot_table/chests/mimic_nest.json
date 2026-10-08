@@ -1,0 +1,59 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "min": 4,
+        "max": 7
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:mushroom_moonshine",
+          "weight": 35,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:toxic_mushroom",
+          "weight": 30,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 6 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:heavy_crowbar",
+          "weight": 18
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:gas_mask",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:gas_mask_filter",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:echo_shard",
+          "weight": 20,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:bone",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 8 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:rotten_flesh",
+          "weight": 30,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 4, "max": 10 } }]
+        }
+      ]
+    }
+  ]
+}

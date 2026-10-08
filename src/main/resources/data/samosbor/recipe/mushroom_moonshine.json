@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "samosbor:toxic_mushroom" },
+    { "item": "minecraft:sugar" },
+    { "item": "minecraft:glass_bottle" }
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:mushroom_moonshine"
+  }
+}

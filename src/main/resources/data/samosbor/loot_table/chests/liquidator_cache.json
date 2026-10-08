@@ -1,0 +1,68 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "min": 4,
+        "max": 7
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:gas_cutter",
+          "weight": 20
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:acetylene_canister",
+          "weight": 30,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 5 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:roks3_flamethrower",
+          "weight": 10
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:flamethrower",
+          "weight": 18
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:l1m_suit",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:chlorine_grenade",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 6 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:ai2_medkit",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:canned_stew",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:fire_charge",
+          "weight": 20,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 3, "max": 8 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:jp11_canister",
+          "weight": 18
+        }
+      ]
+    }
+  ]
+}

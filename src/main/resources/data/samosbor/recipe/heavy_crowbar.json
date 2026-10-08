@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "C": { "item": "samosbor:crowbar" },
+    "I": { "item": "minecraft:iron_ingot" }
+  },
+  "pattern": [
+    "  I",
+    " C ",
+    "I  "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:heavy_crowbar"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "N": { "item": "minecraft:iron_nugget" },
+    "R": { "item": "minecraft:redstone" },
+    "C": { "item": "minecraft:copper_ingot" },
+    "G": { "item": "minecraft:glass_bottle" }
+  },
+  "pattern": [
+    " N ",
+    "RCR",
+    " G "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:dosimeter"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "N": { "item": "minecraft:iron_nugget" },
+    "C": { "item": "minecraft:coal" },
+    "P": { "item": "minecraft:paper" }
+  },
+  "pattern": [
+    " N ",
+    "PCP",
+    " N "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:gas_mask_filter"
+  }
+}

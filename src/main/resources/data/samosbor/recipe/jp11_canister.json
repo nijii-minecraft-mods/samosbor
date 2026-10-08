@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": { "item": "samosbor:acetylene_canister" },
+    "S": { "item": "minecraft:slime_ball" },
+    "B": { "item": "minecraft:glass_bottle" },
+    "M": { "item": "minecraft:amethyst_shard" }
+  },
+  "pattern": [
+    " M ",
+    "SAS",
+    " B "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:jp11_canister"
+  }
+}

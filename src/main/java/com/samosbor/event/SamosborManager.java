@@ -48,6 +48,10 @@ public class SamosborManager {
         return currentPhase;
     }
 
+    public static boolean isSamosborActive() {
+        return currentPhase != SamosborPhase.CALM;
+    }
+
     public static void setPhase(SamosborPhase phase, int duration) {
         currentPhase = phase;
         phaseTimer = duration;

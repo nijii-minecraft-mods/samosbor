@@ -1,0 +1,74 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": {
+        "min": 4,
+        "max": 7
+      },
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:gas_mask",
+          "weight": 20
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:gas_mask_filter",
+          "weight": 30,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 4 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:ai2_medkit",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 2 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:antirad",
+          "weight": 20,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 1, "max": 3 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:flare_gun",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:signal_flare",
+          "weight": 25,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 4, "max": 8 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:chlorine_grenade",
+          "weight": 18,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 4 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:sapper_shovel",
+          "weight": 15
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:heavy_crowbar",
+          "weight": 12
+        },
+        {
+          "type": "minecraft:item",
+          "name": "minecraft:iron_ingot",
+          "weight": 20,
+          "functions": [{ "function": "minecraft:set_count", "count": { "min": 2, "max": 6 } }]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "samosbor:dosimeter",
+          "weight": 14
+        }
+      ]
+    }
+  ]
+}

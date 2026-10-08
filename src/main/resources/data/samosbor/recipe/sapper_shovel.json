@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "I": { "item": "minecraft:iron_ingot" },
+    "S": { "item": "minecraft:stick" },
+    "F": { "item": "minecraft:flint" }
+  },
+  "pattern": [
+    " I ",
+    " F ",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "samosbor:sapper_shovel"
+  }
+}
