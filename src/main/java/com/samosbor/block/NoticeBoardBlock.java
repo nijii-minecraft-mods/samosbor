@@ -1,14 +1,13 @@
 package com.samosbor.block;
 
-import eu.pb4.polymer.core.api.block.PolymerHeadBlock;
+import eu.pb4.polymer.core.api.block.PolymerBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SkullBlock;
+import net.minecraft.block.LoomBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
@@ -23,11 +22,8 @@ import net.minecraft.world.World;
 
 import java.util.List;
 
-public class NoticeBoardBlock extends Block implements PolymerHeadBlock {
+public class NoticeBoardBlock extends Block implements PolymerBlock {
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
-
-    // Bulletin board / notice board head texture
-    public static final String NOTICE_BOARD_SKIN = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYzg5NTFkY2Q0OWJhNjlmM2Y5NGRhMGVhYjBiOTcxNGViYjg3MGQ2ZjVmMTEyZWM0ZGYxMWEwZmZlZDM0MTE1MSJ9fX0=";
 
     private static final List<String> NOTICES = List.of(
             "§e[ДОСКА ОБЪЯВЛЕНИЙ]: §f«ВНИМАНИЕ ЖИЛЬЦАМ СЕКТОРА! В связи с прорывом биомассы на 42-м этаже, норма выдачи пищконцентрата снижена до 150 грамм. Слава Партии!»",
@@ -41,7 +37,7 @@ public class NoticeBoardBlock extends Block implements PolymerHeadBlock {
     );
 
     public NoticeBoardBlock() {
-        super(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).strength(1.2f));
+        super(AbstractBlock.Settings.copy(Blocks.LOOM).strength(1.2f));
         this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
     }
 
@@ -66,20 +62,8 @@ public class NoticeBoardBlock extends Block implements PolymerHeadBlock {
     }
 
     @Override
-    public String getPolymerSkinValue(BlockState state, BlockPos pos, ServerPlayerEntity player) {
-        return NOTICE_BOARD_SKIN;
-    }
-
-    @Override
     public BlockState getPolymerBlockState(BlockState state) {
         Direction facing = state.contains(FACING) ? state.get(FACING) : Direction.NORTH;
-        int rot = switch (facing) {
-            case NORTH -> 8;
-            case SOUTH -> 0;
-            case WEST -> 4;
-            case EAST -> 12;
-            default -> 8;
-        };
-        return Blocks.PLAYER_HEAD.getDefaultState().with(SkullBlock.ROTATION, rot);
+        return Blocks.LOOM.getDefaultState().with(LoomBlock.FACING, facing);
     }
 }

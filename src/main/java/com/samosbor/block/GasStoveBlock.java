@@ -1,15 +1,14 @@
 package com.samosbor.block;
 
-import eu.pb4.polymer.core.api.block.PolymerHeadBlock;
+import eu.pb4.polymer.core.api.block.PolymerBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SkullBlock;
+import net.minecraft.block.SmokerBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.state.StateManager;
@@ -23,15 +22,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
-public class GasStoveBlock extends Block implements PolymerHeadBlock {
+public class GasStoveBlock extends Block implements PolymerBlock {
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
     public static final BooleanProperty LIT = Properties.LIT;
 
-    // Soviet 4-burner Gas Stove ("Lysva" / "Brest-1457")
-    public static final String STOVE_SKIN = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGY5ZGE0NmQ5NzQ2MWExYmUxMDYwMGNjNTQ2YTlkNDYxM2UxNmNmYjU3MTllZWIzOTA0MmU1MDE4MzYwMDhjYSJ9fX0=";
-
     public GasStoveBlock() {
-        super(AbstractBlock.Settings.copy(Blocks.IRON_BLOCK).strength(2.5f).luminance(s -> s.get(LIT) ? 8 : 0));
+        super(AbstractBlock.Settings.copy(Blocks.SMOKER).strength(2.5f).luminance(s -> s.get(LIT) ? 8 : 0));
         this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH).with(LIT, false));
     }
 
@@ -91,20 +87,11 @@ public class GasStoveBlock extends Block implements PolymerHeadBlock {
     }
 
     @Override
-    public String getPolymerSkinValue(BlockState state, BlockPos pos, ServerPlayerEntity player) {
-        return STOVE_SKIN;
-    }
-
-    @Override
     public BlockState getPolymerBlockState(BlockState state) {
         Direction facing = state.contains(FACING) ? state.get(FACING) : Direction.NORTH;
-        int rot = switch (facing) {
-            case NORTH -> 8;
-            case SOUTH -> 0;
-            case WEST -> 4;
-            case EAST -> 12;
-            default -> 8;
-        };
-        return Blocks.PLAYER_HEAD.getDefaultState().with(SkullBlock.ROTATION, rot);
+        boolean isLit = state.contains(LIT) && state.get(LIT);
+        return Blocks.SMOKER.getDefaultState()
+                .with(SmokerBlock.FACING, facing)
+                .with(SmokerBlock.LIT, isLit);
     }
 }

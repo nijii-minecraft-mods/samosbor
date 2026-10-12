@@ -4,12 +4,12 @@ import com.samosbor.enchantment.OccultEnchantmentHelper;
 import com.samosbor.item.ModItems;
 import com.samosbor.item.OccultTomeItem;
 import com.samosbor.util.RomanNumeralUtil;
-import eu.pb4.polymer.core.api.block.PolymerHeadBlock;
+import eu.pb4.polymer.core.api.block.PolymerBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SkullBlock;
+import net.minecraft.block.RespawnAnchorBlock;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.player.PlayerEntity;
@@ -33,14 +33,11 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
-public class CultAltarBlock extends Block implements PolymerHeadBlock {
+public class CultAltarBlock extends Block implements PolymerBlock {
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
 
-    // Dark bloody biomass ritual altar texture
-    public static final String ALTAR_SKIN = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzA4YmU3NjljNzExMDQ4YWI4Y2I1MDkyNGFkZjgyOTJhZGJkOWVjMTJmZjFmOGY1YjFjOWJhNzZhN2IzMmI3MiJ9fX0=";
-
     public CultAltarBlock() {
-        super(AbstractBlock.Settings.copy(Blocks.OBSIDIAN).strength(4.0f).luminance(s -> 7));
+        super(AbstractBlock.Settings.copy(Blocks.RESPAWN_ANCHOR).strength(4.0f).luminance(s -> 7));
         this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
     }
 
@@ -152,20 +149,7 @@ public class CultAltarBlock extends Block implements PolymerHeadBlock {
     }
 
     @Override
-    public String getPolymerSkinValue(BlockState state, BlockPos pos, ServerPlayerEntity player) {
-        return ALTAR_SKIN;
-    }
-
-    @Override
     public BlockState getPolymerBlockState(BlockState state) {
-        Direction facing = state.contains(FACING) ? state.get(FACING) : Direction.NORTH;
-        int rot = switch (facing) {
-            case NORTH -> 8;
-            case SOUTH -> 0;
-            case WEST -> 4;
-            case EAST -> 12;
-            default -> 8;
-        };
-        return Blocks.PLAYER_HEAD.getDefaultState().with(SkullBlock.ROTATION, rot);
+        return Blocks.RESPAWN_ANCHOR.getDefaultState().with(RespawnAnchorBlock.CHARGES, 4);
     }
 }

@@ -6,6 +6,6 @@ import net.minecraft.block.Blocks;
 
 public class P46PanelBlock extends SimplePolymerBlock {
     public P46PanelBlock() {
-        super(AbstractBlock.Settings.copy(Blocks.STONE_BRICKS).strength(2.5f, 6.0f), Blocks.CHISELED_STONE_BRICKS);
+        super(AbstractBlock.Settings.copy(Blocks.SMOOTH_STONE).strength(2.5f, 6.0f), Blocks.SMOOTH_STONE);
     }
 }

@@ -15,7 +15,8 @@ import net.minecraft.world.gen.feature.TreeConfiguredFeatures;
 public class ModBlocks {
     public static final String MOD_ID = "samosbor";
 
-    public static final Block P46_PANEL = register("p46_panel", new P46PanelBlock(), Items.CHISELED_STONE_BRICKS);
+    // Structural building materials
+    public static final Block P46_PANEL = register("p46_panel", new P46PanelBlock(), Items.SMOOTH_STONE);
     public static final Block PAINTED_PANEL = register("painted_panel", new PaintedPanelBlock(), Items.CYAN_TERRACOTTA);
     public static final Block HERMETIC_DOOR = register("hermetic_door", new HermeticDoorBlock(), Items.IRON_DOOR);
     public static final Block EMERGENCY_LAMP = register("emergency_lamp", new EmergencyLampBlock(), Items.REDSTONE_LAMP);
@@ -25,16 +26,16 @@ public class ModBlocks {
     public static final Block TOXIC_MUSHROOM = register("toxic_mushroom", new ToxicMushroomBlock(TreeConfiguredFeatures.HUGE_RED_MUSHROOM), Items.RED_MUSHROOM);
     public static final Block MUTATED_BORSHCHEVIK = register("mutated_borshchevik", new MutatedBorshchevikBlock(), Items.SWEET_BERRIES);
 
-    // Domestic & Soviet furniture blocks (Polymer 3D Heads)
+    // Domestic & Soviet furniture blocks
     public static final Block WALL_CARPET = register("wall_carpet", new WallCarpetBlock(), Items.RED_GLAZED_TERRACOTTA);
-    public static final Block OLD_TV = registerHead("old_tv", new OldTvBlock());
-    public static final Block RADIO_RECEIVER = registerHead("radio_receiver", new RadioReceiverBlock());
-    public static final Block CAST_IRON_RADIATOR = registerHead("cast_iron_radiator", new CastIronRadiatorBlock());
-    public static final Block GAS_STOVE = registerHead("gas_stove", new GasStoveBlock());
-    public static final Block FOOD_DISPENSER = registerHead("food_dispenser", new FoodDispenserBlock());
-    public static final Block NOTICE_BOARD = registerHead("notice_board", new NoticeBoardBlock());
-    public static final Block MEDKIT_BOX = registerHead("medkit_box", new MedkitBoxBlock());
-    public static final Block EMERGENCY_SIREN = registerHead("emergency_siren", new EmergencySirenBlock());
+    public static final Block OLD_TV = register("old_tv", new OldTvBlock(), Items.JUKEBOX);
+    public static final Block RADIO_RECEIVER = register("radio_receiver", new RadioReceiverBlock(), Items.NOTE_BLOCK);
+    public static final Block CAST_IRON_RADIATOR = register("cast_iron_radiator", new CastIronRadiatorBlock(), Items.IRON_BARS);
+    public static final Block GAS_STOVE = register("gas_stove", new GasStoveBlock(), Items.SMOKER);
+    public static final Block FOOD_DISPENSER = register("food_dispenser", new FoodDispenserBlock(), Items.DISPENSER);
+    public static final Block NOTICE_BOARD = register("notice_board", new NoticeBoardBlock(), Items.LOOM);
+    public static final Block MEDKIT_BOX = register("medkit_box", new MedkitBoxBlock(), Items.RED_GLAZED_TERRACOTTA);
+    public static final Block EMERGENCY_SIREN = register("emergency_siren", new EmergencySirenBlock(), Items.REDSTONE_LAMP);
     public static final Block RUSTY_SINK = register("rusty_sink", new RustySinkBlock(), Items.CAULDRON);
     public static final Block GARBAGE_CHUTE = register("garbage_chute", new GarbageChuteBlock(), Items.HOPPER);
 
@@ -43,19 +44,12 @@ public class ModBlocks {
     public static final Block ELEVATOR_PANEL = register("elevator_panel", new ElevatorPanelBlock(), Items.OBSERVER);
 
     // Occult & Cultist blocks
-    public static final Block CULT_ALTAR = registerHead("cult_altar", new CultAltarBlock());
+    public static final Block CULT_ALTAR = register("cult_altar", new CultAltarBlock(), Items.RESPAWN_ANCHOR);
 
     private static Block register(String name, Block block, Item vanillaItem) {
         Identifier id = Identifier.of(MOD_ID, name);
         Registry.register(Registries.BLOCK, id, block);
         Registry.register(Registries.ITEM, id, new PolymerBlockItem(block, new Item.Settings(), vanillaItem));
-        return block;
-    }
-
-    private static <T extends Block & eu.pb4.polymer.core.api.block.PolymerHeadBlock> Block registerHead(String name, T block) {
-        Identifier id = Identifier.of(MOD_ID, name);
-        Registry.register(Registries.BLOCK, id, block);
-        Registry.register(Registries.ITEM, id, new eu.pb4.polymer.core.api.item.PolymerHeadBlockItem(block, new Item.Settings()));
         return block;
     }
 

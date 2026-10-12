@@ -461,7 +461,7 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                                       BlockState fluorLamp, long seed) {
         boolean isStation = isMetroStationChunk(chunkX, chunkZ);
         BlockState stoneBricks = Blocks.STONE_BRICKS.getDefaultState();
-        BlockState chiseledStone = Blocks.CHISELED_STONE_BRICKS.getDefaultState();
+        BlockState chiseledStone = Blocks.POLISHED_ANDESITE.getDefaultState();
         BlockState quartz = Blocks.SMOOTH_QUARTZ.getDefaultState();
         BlockState andesite = Blocks.POLISHED_ANDESITE.getDefaultState();
         BlockState redstoneBlock = Blocks.REDSTONE_BLOCK.getDefaultState();

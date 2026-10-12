@@ -1,15 +1,14 @@
 package com.samosbor.block;
 
-import eu.pb4.polymer.core.api.block.PolymerHeadBlock;
+import eu.pb4.polymer.core.api.block.PolymerBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SkullBlock;
+import net.minecraft.block.RedstoneLampBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -24,15 +23,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
-public class EmergencySirenBlock extends Block implements PolymerHeadBlock {
+public class EmergencySirenBlock extends Block implements PolymerBlock {
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
     public static final BooleanProperty LIT = Properties.LIT;
 
-    // Red industrial warning beacon / siren skin
-    public static final String SIREN_SKIN = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNDg5ZTIwODgzNzMzMGFhZDcxNmU5NjQ2MDQ1NDRkYjA1ODAwMjljMDgwMmMxZjExMWI2MjQxMWM3OTQxNGYyNCJ9fX0=";
-
     public EmergencySirenBlock() {
-        super(AbstractBlock.Settings.copy(Blocks.IRON_BLOCK).strength(2.5f).luminance(s -> s.get(LIT) ? 12 : 0));
+        super(AbstractBlock.Settings.copy(Blocks.REDSTONE_LAMP).strength(2.5f).luminance(s -> s.get(LIT) ? 15 : 0));
         this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH).with(LIT, false));
     }
 
@@ -69,20 +65,8 @@ public class EmergencySirenBlock extends Block implements PolymerHeadBlock {
     }
 
     @Override
-    public String getPolymerSkinValue(BlockState state, BlockPos pos, ServerPlayerEntity player) {
-        return SIREN_SKIN;
-    }
-
-    @Override
     public BlockState getPolymerBlockState(BlockState state) {
-        Direction facing = state.contains(FACING) ? state.get(FACING) : Direction.NORTH;
-        int rot = switch (facing) {
-            case NORTH -> 8;
-            case SOUTH -> 0;
-            case WEST -> 4;
-            case EAST -> 12;
-            default -> 8;
-        };
-        return Blocks.PLAYER_HEAD.getDefaultState().with(SkullBlock.ROTATION, rot);
+        boolean isLit = state.contains(LIT) && state.get(LIT);
+        return Blocks.REDSTONE_LAMP.getDefaultState().with(RedstoneLampBlock.LIT, isLit);
     }
 }

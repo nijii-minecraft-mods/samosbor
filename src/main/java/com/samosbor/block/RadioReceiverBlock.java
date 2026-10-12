@@ -1,11 +1,10 @@
 package com.samosbor.block;
 
-import eu.pb4.polymer.core.api.block.PolymerHeadBlock;
+import eu.pb4.polymer.core.api.block.PolymerBlock;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.block.SkullBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.item.ItemStack;
@@ -23,21 +22,18 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
-public class RadioReceiverBlock extends Block implements PolymerHeadBlock {
+public class RadioReceiverBlock extends Block implements PolymerBlock {
     public static final DirectionProperty FACING = Properties.HORIZONTAL_FACING;
     public static final IntProperty MODE = IntProperty.of("mode", 0, 2);
 
-    // Vintage Soviet VEF-202 Radio head skin
-    public static final String RADIO_SKIN = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU4NzlhN2FhN2VjZmY3MjA3NGUyZDNkZjljYTNlMGZiNDY2MmQwNDA3YTExZDhjMWM0ZjRlZjFlOTdkODRmMCJ9fX0=";
-
     private static final String[] BROADCASTS = new String[]{
-            "§8[Радиоприёмник]: Выключен.",
+            "§8[Радиоприёмник «ВЭФ-202»]: Выключен.",
             "§e[Радио «Маяк»]: §7«...План сборки ЖП-11-У перевыполнен на 104%! Гражданам не выходить в технические колодцы...»",
             "§c[Частота ГО]: §4«...ВНИМАНИЕ. На этажах 40-55 объявлен карантин. Любые нелюди подлежат бетонированию...»"
     };
 
     public RadioReceiverBlock() {
-        super(AbstractBlock.Settings.copy(Blocks.OAK_PLANKS).strength(1.2f));
+        super(AbstractBlock.Settings.copy(Blocks.NOTE_BLOCK).strength(1.2f));
         this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH).with(MODE, 0));
     }
 
@@ -94,20 +90,7 @@ public class RadioReceiverBlock extends Block implements PolymerHeadBlock {
     }
 
     @Override
-    public String getPolymerSkinValue(BlockState state, BlockPos pos, ServerPlayerEntity player) {
-        return RADIO_SKIN;
-    }
-
-    @Override
     public BlockState getPolymerBlockState(BlockState state) {
-        Direction facing = state.contains(FACING) ? state.get(FACING) : Direction.NORTH;
-        int rot = switch (facing) {
-            case NORTH -> 8;
-            case SOUTH -> 0;
-            case WEST -> 4;
-            case EAST -> 12;
-            default -> 8;
-        };
-        return Blocks.PLAYER_HEAD.getDefaultState().with(SkullBlock.ROTATION, rot);
+        return Blocks.NOTE_BLOCK.getDefaultState();
     }
 }

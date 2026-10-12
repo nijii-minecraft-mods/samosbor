@@ -38,9 +38,18 @@ public class SamosborMod implements ModInitializer {
         ModDimensions.initialize();
         KhrushchyovkaFeature.register();
 
-        // Register Overworld Khrushchyovka structure generation
+        // Register Overworld Khrushchyovka structure generation (rare anomaly in deep forests & taiga)
         BiomeModifications.addFeature(
-                BiomeSelectors.foundInOverworld(),
+                BiomeSelectors.includeByKey(
+                        net.minecraft.world.biome.BiomeKeys.DARK_FOREST,
+                        net.minecraft.world.biome.BiomeKeys.TAIGA,
+                        net.minecraft.world.biome.BiomeKeys.OLD_GROWTH_PINE_TAIGA,
+                        net.minecraft.world.biome.BiomeKeys.OLD_GROWTH_SPRUCE_TAIGA,
+                        net.minecraft.world.biome.BiomeKeys.FOREST,
+                        net.minecraft.world.biome.BiomeKeys.BIRCH_FOREST,
+                        net.minecraft.world.biome.BiomeKeys.OLD_GROWTH_BIRCH_FOREST,
+                        net.minecraft.world.biome.BiomeKeys.PLAINS
+                ),
                 GenerationStep.Feature.SURFACE_STRUCTURES,
                 KHRUSHCHYOVKA_PLACED_KEY
         );
