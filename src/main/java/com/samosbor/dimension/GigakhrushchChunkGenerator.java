@@ -539,8 +539,8 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 case 4 -> "«НИИ-ХИММАШ»";
                 default -> "«ЗАВОДСКАЯ»";
             };
-            placeWallNotice(chunk, mutable.set(8, baseY + 3, 3), Direction.SOUTH, "§fСТАНЦИЯ", "§6" + stationName, "§0Линия ГО-Ликвидация", "§0Посадка на дрезины", DyeColor.ORANGE);
-            placeWallNotice(chunk, mutable.set(8, baseY + 3, 12), Direction.NORTH, "§fСТАНЦИЯ", "§6" + stationName, "§0Линия ГО-Ликвидация", "§0Посадка на дрезины", DyeColor.ORANGE);
+            placeWallNotice(chunk, mutable.set(8, baseY + 4, 3), Direction.SOUTH, "§fСТАНЦИЯ", "§6" + stationName, "§0Линия ГО-Ликвидация", "§0Посадка на дрезины", DyeColor.ORANGE);
+            placeWallNotice(chunk, mutable.set(8, baseY + 4, 12), Direction.NORTH, "§fСТАНЦИЯ", "§6" + stationName, "§0Линия ГО-Ликвидация", "§0Посадка на дрезины", DyeColor.ORANGE);
 
             // 7. Station Supply Chest (Minecarts, Rails, Torches, Coal, Bread)
             placeStationChest(chunk, mutable.set(8, baseY + 2, 5));
