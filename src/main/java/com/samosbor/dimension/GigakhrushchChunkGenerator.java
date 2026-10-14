@@ -985,7 +985,9 @@ public class GigakhrushchChunkGenerator extends ChunkGenerator {
                 .withMessage(1, Text.literal(l2))
                 .withMessage(2, Text.literal(l3))
                 .withMessage(3, Text.literal(l4));
-        sign.setText(text, true);
+        try {
+            sign.setText(text, true);
+        } catch (Throwable ignored) {}
         chunk.setBlockEntity(sign);
     }
 
