@@ -95,14 +95,21 @@ public class SamosborManager {
                 }
 
                 // Geiger counter clicks near biomass blocks
+                BlockPos.Mutable mutableScan = new BlockPos.Mutable();
                 for (ServerPlayerEntity player : players) {
                     if (world.random.nextInt(8) == 0) {
                         BlockPos pPos = player.getBlockPos();
-                        for (int dx = -5; dx <= 5; dx += 2) {
-                            for (int dy = -2; dy <= 2; dy++) {
+                        int px = pPos.getX();
+                        int py = pPos.getY();
+                        int pz = pPos.getZ();
+                        boolean foundBiomass = false;
+                        for (int dx = -5; dx <= 5 && !foundBiomass; dx += 2) {
+                            for (int dy = -2; dy <= 2 && !foundBiomass; dy++) {
                                 for (int dz = -5; dz <= 5; dz += 2) {
-                                    if (world.getBlockState(pPos.add(dx, dy, dz)).isOf(com.samosbor.block.ModBlocks.BIOMASS)) {
+                                    mutableScan.set(px + dx, py + dy, pz + dz);
+                                    if (world.getBlockState(mutableScan).isOf(com.samosbor.block.ModBlocks.BIOMASS)) {
                                         world.playSound(null, player.getX(), player.getY(), player.getZ(), SoundEvents.BLOCK_TRIPWIRE_CLICK_ON, SoundCategory.PLAYERS, 0.5f, 1.9f + world.random.nextFloat() * 0.1f);
+                                        foundBiomass = true;
                                         break;
                                     }
                                 }
@@ -405,19 +412,37 @@ public class SamosborManager {
         }
     }
 
+    private static final class SafetyCache {
+        final long posLong;
+        final long checkTick;
+        final boolean safe;
+
+        SafetyCache(long posLong, long checkTick, boolean safe) {
+            this.posLong = posLong;
+            this.checkTick = checkTick;
+            this.safe = safe;
+        }
+    }
+
+    private static final java.util.Map<java.util.UUID, SafetyCache> SAFETY_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+
     private static void tickRecession(ServerWorld world, List<ServerPlayerEntity> players) {
         // Recession: clearing particles and resetting sirens
+        BlockPos.Mutable mutablePos = new BlockPos.Mutable();
         for (ServerPlayerEntity player : players) {
             world.spawnParticles(ParticleTypes.CLOUD, player.getX(), player.getY() + 1, player.getZ(), 2, 2.0, 1.0, 2.0, 0.01);
 
             BlockPos pPos = player.getBlockPos();
+            int px = pPos.getX();
+            int py = pPos.getY();
+            int pz = pPos.getZ();
             for (int dx = -10; dx <= 10; dx += 2) {
                 for (int dy = -3; dy <= 4; dy++) {
                     for (int dz = -10; dz <= 10; dz += 2) {
-                        BlockPos sPos = pPos.add(dx, dy, dz);
-                        net.minecraft.block.BlockState bState = world.getBlockState(sPos);
+                        mutablePos.set(px + dx, py + dy, pz + dz);
+                        net.minecraft.block.BlockState bState = world.getBlockState(mutablePos);
                         if (bState.getBlock() instanceof com.samosbor.block.EmergencySirenBlock && bState.get(com.samosbor.block.EmergencySirenBlock.LIT)) {
-                            world.setBlockState(sPos, bState.with(com.samosbor.block.EmergencySirenBlock.LIT, false), net.minecraft.block.Block.NOTIFY_LISTENERS);
+                            world.setBlockState(mutablePos, bState.with(com.samosbor.block.EmergencySirenBlock.LIT, false), net.minecraft.block.Block.NOTIFY_LISTENERS);
                         }
                     }
                 }
@@ -440,75 +465,95 @@ public class SamosborManager {
             }
         }
 
-        // 2. Sealed room check via BFS flood-fill
         BlockPos startPos = player.getBlockPos();
-        int startLx = Math.floorMod(startPos.getX(), 16);
-        int startLz = Math.floorMod(startPos.getZ(), 16);
+        long startPosLong = startPos.asLong();
+        long currentTick = world.getTime();
 
-        boolean inOpenCorridor = (startLx == 7 || startLx == 8 || startLz == 7 || startLz == 8);
-        boolean roomAirtight = false;
-
-        if (!inOpenCorridor) {
-            java.util.Queue<BlockPos> queue = new java.util.ArrayDeque<>();
-            java.util.Set<BlockPos> visited = new java.util.HashSet<>();
-            queue.add(startPos);
-            visited.add(startPos);
-
-            int maxAirBlocks = 120;
-            boolean breached = false;
-
-            while (!queue.isEmpty()) {
-                BlockPos current = queue.poll();
-
-                int lx = Math.floorMod(current.getX(), 16);
-                int lz = Math.floorMod(current.getZ(), 16);
-                if (lx == 7 || lx == 8 || lz == 7 || lz == 8) {
-                    breached = true;
-                    break;
-                }
-
-                if (visited.size() > maxAirBlocks) {
-                    breached = true;
-                    break;
-                }
-
-                for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
-                    BlockPos neighbor = current.offset(dir);
-                    if (visited.contains(neighbor)) {
-                        continue;
-                    }
-
-                    if (Math.abs(neighbor.getY() - startPos.getY()) > 5) {
-                        breached = true;
-                        break;
-                    }
-
-                    net.minecraft.block.BlockState bState = world.getBlockState(neighbor);
-
-                    if (bState.getBlock() instanceof HermeticDoorBlock) {
-                        if (HermeticDoorBlock.isSealedAt(world, neighbor)) {
-                            continue; // Sealed hermetic door blocks the fog
-                        } else {
-                            breached = true;
-                            break;
-                        }
-                    }
-
-                    if (!bState.isAir() && !bState.isOf(net.minecraft.block.Blocks.FIRE) && bState.getFluidState().isEmpty() && !bState.getCollisionShape(world, neighbor).isEmpty()) {
-                        continue;
-                    }
-
-                    visited.add(neighbor);
-                    queue.add(neighbor);
-                }
-
-                if (breached) break;
-            }
-
-            if (!breached) {
-                roomAirtight = true;
+        // 1.2 Check cache: if player didn't change block and check was recent (<20 ticks), return cached result
+        SafetyCache cached = SAFETY_CACHE.get(player.getUuid());
+        if (cached != null && cached.posLong == startPosLong && (currentTick - cached.checkTick) < 20L) {
+            if (cached.safe) {
+                return true;
             }
         }
+
+        // 2. High-performance, allocation-free sealed room check via BFS flood-fill
+        boolean roomAirtight = false;
+        it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue queue = new it.unimi.dsi.fastutil.longs.LongArrayFIFOQueue();
+        it.unimi.dsi.fastutil.longs.LongOpenHashSet visited = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+
+        queue.enqueue(startPosLong);
+        visited.add(startPosLong);
+
+        int maxAirBlocks = 256;
+        boolean breached = false;
+        int startY = startPos.getY();
+        BlockPos.Mutable neighborPos = new BlockPos.Mutable();
+
+        while (!queue.isEmpty()) {
+            long currentLong = queue.dequeueLong();
+            int curX = BlockPos.unpackLongX(currentLong);
+            int curY = BlockPos.unpackLongY(currentLong);
+            int curZ = BlockPos.unpackLongZ(currentLong);
+
+            // Courtyard abyss / lightwell is never airtight
+            int curCx = curX >> 4;
+            int curCz = curZ >> 4;
+            if (com.samosbor.dimension.GigakhrushchLayout.isCourtyardChunk(curCx, curCz)) {
+                breached = true;
+                break;
+            }
+
+            if (visited.size() > maxAirBlocks) {
+                // Room volume is too large: open corridor, unsealed industrial hall or broken sector
+                breached = true;
+                break;
+            }
+
+            for (net.minecraft.util.math.Direction dir : net.minecraft.util.math.Direction.values()) {
+                int nx = curX + dir.getOffsetX();
+                int ny = curY + dir.getOffsetY();
+                int nz = curZ + dir.getOffsetZ();
+
+                if (Math.abs(ny - startY) > 5) {
+                    breached = true;
+                    break;
+                }
+
+                long neighborLong = BlockPos.asLong(nx, ny, nz);
+                if (visited.contains(neighborLong)) {
+                    continue;
+                }
+
+                neighborPos.set(nx, ny, nz);
+                net.minecraft.block.BlockState bState = world.getBlockState(neighborPos);
+
+                if (bState.getBlock() instanceof HermeticDoorBlock) {
+                    if (HermeticDoorBlock.isSealedAt(world, neighborPos)) {
+                        continue; // Sealed hermetic door safely seals the room
+                    } else {
+                        breached = true; // Open or unsealed hermetic door breaches the seal
+                        break;
+                    }
+                }
+
+                // Solid blocks with full collision shape, no fluids and no fire stop the fog
+                if (!bState.isAir() && !bState.isOf(net.minecraft.block.Blocks.FIRE) && bState.getFluidState().isEmpty() && !bState.getCollisionShape(world, neighborPos).isEmpty()) {
+                    continue;
+                }
+
+                visited.add(neighborLong);
+                queue.enqueue(neighborLong);
+            }
+
+            if (breached) break;
+        }
+
+        if (!breached) {
+            roomAirtight = true;
+        }
+
+        SAFETY_CACHE.put(player.getUuid(), new SafetyCache(startPosLong, currentTick, roomAirtight));
 
         // If inside airtight room, player is 100% safe without consuming mask durability
         if (roomAirtight) {

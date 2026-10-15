@@ -137,4 +137,43 @@ public class GigakhrushchGeneratorTest {
         assertEquals(GigakhrushchLayout.FloorArchetype.RESIDENTIAL, GigakhrushchLayout.getFloorArchetype(1));
         assertEquals(GigakhrushchLayout.FloorArchetype.RESIDENTIAL, GigakhrushchLayout.getFloorArchetype(2));
     }
+
+    @Test
+    public void testCorridorTopologiesAndFloorPlans() {
+        Set<GigakhrushchLayout.CorridorTopology> observedTopologies = new HashSet<>();
+
+        for (int cx = -20; cx <= 20; cx++) {
+            for (int cz = -20; cz <= 20; cz++) {
+                for (int floor = 1; floor <= 20; floor++) {
+                    GigakhrushchLayout.CorridorTopology topology = GigakhrushchLayout.getCorridorTopology(cx, cz, floor);
+                    assertNotNull(topology);
+                    observedTopologies.add(topology);
+                }
+            }
+        }
+
+        // Must observe varied corridor topologies across the megastructure
+        assertTrue(observedTopologies.contains(GigakhrushchLayout.CorridorTopology.CROSS));
+        assertTrue(observedTopologies.contains(GigakhrushchLayout.CorridorTopology.HALLWAY_EW));
+        assertTrue(observedTopologies.contains(GigakhrushchLayout.CorridorTopology.HALLWAY_NS));
+        assertTrue(observedTopologies.size() >= 6, "Expected at least 6 distinct corridor floor topologies");
+    }
+
+    @Test
+    public void testCorridorTileTopologyRules() {
+        // Cross intersection has corridors on both axes
+        assertTrue(GigakhrushchLayout.isCorridorTile(7, 2, GigakhrushchLayout.CorridorTopology.CROSS));
+        assertTrue(GigakhrushchLayout.isCorridorTile(2, 7, GigakhrushchLayout.CorridorTopology.CROSS));
+        assertFalse(GigakhrushchLayout.isCorridorTile(2, 2, GigakhrushchLayout.CorridorTopology.CROSS));
+
+        // EW Hallway has corridors only along lz=7..8
+        assertTrue(GigakhrushchLayout.isCorridorTile(2, 7, GigakhrushchLayout.CorridorTopology.HALLWAY_EW));
+        assertTrue(GigakhrushchLayout.isCorridorTile(14, 8, GigakhrushchLayout.CorridorTopology.HALLWAY_EW));
+        assertFalse(GigakhrushchLayout.isCorridorTile(7, 2, GigakhrushchLayout.CorridorTopology.HALLWAY_EW));
+
+        // NS Hallway has corridors only along lx=7..8
+        assertTrue(GigakhrushchLayout.isCorridorTile(7, 2, GigakhrushchLayout.CorridorTopology.HALLWAY_NS));
+        assertTrue(GigakhrushchLayout.isCorridorTile(8, 14, GigakhrushchLayout.CorridorTopology.HALLWAY_NS));
+        assertFalse(GigakhrushchLayout.isCorridorTile(2, 7, GigakhrushchLayout.CorridorTopology.HALLWAY_NS));
+    }
 }
